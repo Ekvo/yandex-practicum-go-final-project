@@ -29,3 +29,11 @@ func CreatePathWithFile(partOfFilePath string) error {
 	_, err = os.Create(fullPath)
 	return err
 }
+
+// Abs - absolute value
+func Abs(val int) int {
+	if val < 0 {
+		return -val
+	}
+	return val
+}

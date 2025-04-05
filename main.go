@@ -3,11 +3,11 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/joho/godotenv"
 
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/database"
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/server"
 )
 
 func init() {
@@ -24,9 +24,10 @@ func main() {
 		}
 	}()
 	_ = database.NewSource(db)
+	mux := http.NewServeMux()
+	srv := server.InitSRV(mux)
 
-	http.Handle("/", http.FileServer(http.Dir("./web")))
-	if err := http.ListenAndServe(":"+os.Getenv("TODO_PORT"), nil); err != nil {
-		log.Fatalf("stop error - %v", err)
-	}
+	mux.Handle("/", http.FileServer(http.Dir("./web")))
+
+	srv.ListenAndServeAndShut(server.ServerTimeoutShut)
 }

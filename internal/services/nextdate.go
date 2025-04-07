@@ -7,6 +7,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/model"
 	"github.com/Ekvo/yandex-practicum-go-final-project/pkg/common"
 )
 
@@ -43,15 +44,13 @@ const (
 	sunday = 7
 )
 
-const DateFormat = "20060102"
-
 // NextDate - main function to algorithm
 func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	if len(repeat) == 0 {
 		return "", ErrServicesWrongRepeat
 	}
 	now = truncToDay(now)
-	taskDateStart, err := time.Parse(DateFormat, dstart)
+	taskDateStart, err := time.Parse(model.DateFormat, dstart)
 	if err != nil {
 		return "", ErrServicesInvalidDate
 	}
@@ -71,7 +70,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return newDate.UTC().Format(DateFormat), nil
+	return newDate.UTC().Format(model.DateFormat), nil
 }
 
 // only yaer,month,day - work
@@ -133,7 +132,7 @@ func nextDateByYear(now, taskDateStart time.Time, repeat string) (time.Time, err
 		newDate = taskDateStart.AddDate(years, 0, 0).UTC()
 	}
 	// if the month or day or month and day is less than "now"
-	if !newDate.After(now) {
+	if !newDate.UTC().After(now.UTC()) {
 		newDate = newDate.AddDate(1, 0, 0).UTC()
 	}
 	return newDate, nil

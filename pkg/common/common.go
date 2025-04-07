@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // ErrCommonInvalidMedia - wrong media type in Request
@@ -95,4 +96,13 @@ func EncodeJSON(ctx context.Context, w http.ResponseWriter, httpCode int, obj an
 	if err := json.NewEncoder(w).Encode(obj); err != nil {
 		log.Printf("json.Encode error - %v", err)
 	}
+}
+
+func BeginningOfMonth(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
+}
+
+// ReduceTimeToDay - yaer,month,day
+func ReduceTimeToDay(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 }

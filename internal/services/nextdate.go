@@ -49,7 +49,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	if len(repeat) == 0 {
 		return "", ErrServicesWrongRepeat
 	}
-	now = truncToDay(now)
+	now = common.ReduceTimeToDay(now)
 	taskDateStart, err := time.Parse(model.DateFormat, dstart)
 	if err != nil {
 		return "", ErrServicesInvalidDate
@@ -71,11 +71,6 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 		return "", err
 	}
 	return newDate.UTC().Format(model.DateFormat), nil
-}
-
-// only yaer,month,day - work
-func truncToDay(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 }
 
 const (
@@ -223,8 +218,10 @@ func nextDateByMonth(now, taskDateStart time.Time, repeat string) (time.Time, er
 	}
 	for m, i := len(month), 0; i < maxDay; i++ {
 		if m != 0 && !month[newDate.Month()] {
-			newDate = beginningOfMonth(newDate)
 			newDate = newDate.AddDate(0, 1, 0).UTC()
+			if newDate.Day() != 1 {
+				newDate = common.BeginningOfMonth(newDate)
+			}
 			continue
 		}
 		if days[newDate.Day()] {
@@ -241,10 +238,6 @@ func nextDateByMonth(now, taskDateStart time.Time, repeat string) (time.Time, er
 		newDate = newDate.AddDate(0, 0, 1).UTC()
 	}
 	return time.Time{}, ErrServicUnexpectedBehavior
-}
-
-func beginningOfMonth(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
 }
 
 // monthAndDay - find (number of days) map[int]bool -> (because may contain -1, -2)

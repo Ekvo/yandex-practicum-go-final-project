@@ -1,5 +1,5 @@
 // task - describe the Task object and its implementing interfaces
-package modelmodel
+package model
 
 import (
 	"context"

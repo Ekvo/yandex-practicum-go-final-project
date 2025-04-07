@@ -4,6 +4,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
@@ -20,8 +21,17 @@ func NewSource(db *sql.DB) Source {
 	return Source{store: dbTX{DB: db}}
 }
 
-func InitDB() *sql.DB {
+// InitDB - create a database connection
+//
+// 1. get location of file.db
+// 2. check file, if not exists -> create database file and install = true
+// 3. sql.Open
+// 4. if install = true -> create table(s)
+func InitDB() (*sql.DB, error) {
 	pathDB := os.Getenv("TODO_DBFILE")
+	if pathDB == "" {
+		pathDB = "./storage/scheduler.db"
+	}
 	install := false
 	if _, err := os.Stat(pathDB); err != nil {
 		if err := common.CreatePathWithFile(pathDB); err != nil {
@@ -31,15 +41,15 @@ func InitDB() *sql.DB {
 	}
 	db, err := sql.Open("sqlite", pathDB)
 	if err != nil {
-		log.Fatalf("database: sql.Open error - %v", err)
+		return nil, fmt.Errorf("database: sql.Open error - %v", err)
 	}
 	if install {
 		ctx, cancel := context.WithTimeout(context.Background(), ctxTimeTableCreate)
 		defer cancel()
 		_, err := db.ExecContext(ctx, Schema)
 		if err != nil {
-			log.Fatalf("database: schema init error - %v", err)
+			return nil, fmt.Errorf("database: schema init error - %v", err)
 		}
 	}
-	return db
+	return db, nil
 }

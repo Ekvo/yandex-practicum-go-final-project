@@ -1,8 +1,9 @@
 // transaction
 //
-// add one field on struct 'dbTX' to accommodate '*sql.Tx', so 'dbTX' have *DB and *Tx fields
+// dbTX - wrapper to '*sql.DB' and '*sql.Tx'
+//
 // inside Transaction set tx to *dbTX.Tx
-// inside 'some' query use *Source.tx.Tx for every query
+// inside 'some' query use *Source.tx.Tx
 package database
 
 import (
@@ -23,7 +24,7 @@ func (base *dbTX) Transaction(ctx context.Context, execute func(ctx context.Cont
 	}
 	defer func() {
 		if err := tx.Rollback(); err != nil {
-			log.Printf("transaction: Rollback: error - %v", err)
+			log.Printf("transaction: Rollback error - %v", err)
 		}
 	}()
 	base.Tx = tx

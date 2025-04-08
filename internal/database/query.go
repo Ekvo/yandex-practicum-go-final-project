@@ -3,9 +3,14 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/model"
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services"
+	"github.com/Ekvo/yandex-practicum-go-final-project/pkg/common"
 )
 
 // ErrDatabseAlreadyExist - if unique columns already exist in the storage
@@ -40,10 +45,10 @@ INSERT INTO scheduler (date,
                        repeat)
 VALUES ($1, $2, $3, $4)
 RETURNING id;`,
-			newTask.Date,                             // 1
-			newTask.Title,                            // 2
-			WhenEmptyStringThenNULL(newTask.Comment), // 3
-			newTask.Repeat,                           // 4
+			newTask.Date,    // 1
+			newTask.Title,   // 2
+			newTask.Comment, // 3 // if empty need write null, but _test_ need ""
+			newTask.Repeat,  // 4
 		).Scan(&newTask.ID)
 		if err != nil {
 			return ErrDatabseAlreadyExist
@@ -53,10 +58,57 @@ RETURNING id;`,
 	return newTask.ID, s.store.Transaction(ctx, createTask)
 }
 
-// WhenEmptyStringThenNULL - if field VARCHAR or TEXT in database can be NULL
-func WhenEmptyStringThenNULL(s string) *string {
-	if len(s) != 0 {
-		return &s
+// FindTaskList - get 'ptr' of type 'services.TaskProperty' from 'data' look (internal/services/taskproperty.go)
+//
+// add a command line to 'strings.Builder' if we find any characteristic from "TaskProperty" then append 'args'
+// args        - pass to sql.QueryContext
+// numberOfArg - marks the argument number in the query string
+func (s Source) FindTaskList(ctx context.Context, data any) ([]model.TaskModel, error) {
+	property := data.(*services.TaskProperty)
+	query := strings.Builder{}
+	args := make([]any, 0, 2)
+	numberOfArg := 1
+
+	query.WriteString("SELECT * FROM scheduler")
+	if property.IsWord() {
+		query.WriteString("\nWHERE title LIKE $1 OR comment LIKE $1\nORDER BY date ASC")
+		args = append(args, fmt.Sprintf(`%%%s%%`, property.PassWord()))
+		numberOfArg++
+	} else if property.IsDate() {
+		query.WriteString("\nWHERE date = $1")
+		args = append(args, property.PassDate().UTC().Format(model.DateFormat))
+		numberOfArg++
 	}
-	return nil
+	query.WriteString(fmt.Sprintf("\nLIMIT $%d;", numberOfArg))
+	args = append(args, property.PassLimit())
+
+	rows, err := s.store.DB.QueryContext(ctx, query.String(), args...)
+	if err != nil {
+		return nil, err
+	}
+	return scanTaskList(rows)
+}
+
+func scanTask[T common.ScanSQL](r T) (model.TaskModel, error) {
+	var task model.TaskModel
+	err := r.Scan(
+		&task.ID,
+		&task.Date,
+		&task.Title,
+		&task.Comment,
+		&task.Repeat,
+	)
+	return task, err
+}
+
+func scanTaskList(rows *sql.Rows) ([]model.TaskModel, error) {
+	var tasks []model.TaskModel
+	for rows.Next() {
+		task, err := scanTask[*sql.Rows](rows)
+		if err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, task)
+	}
+	return tasks, rows.Err()
 }

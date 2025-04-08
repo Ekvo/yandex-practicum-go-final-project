@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
 	_ "modernc.org/sqlite"
@@ -35,7 +34,7 @@ func InitDB() (*sql.DB, error) {
 	install := false
 	if _, err := os.Stat(pathDB); err != nil {
 		if err := common.CreatePathWithFile(pathDB); err != nil {
-			log.Fatalf("database: file.db create error - %v", err)
+			return nil, fmt.Errorf("database: file.db create error - %v", err)
 		}
 		install = true
 	}

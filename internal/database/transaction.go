@@ -23,7 +23,7 @@ func (base *dbTX) Transaction(ctx context.Context, execute func(ctx context.Cont
 		return err
 	}
 	defer func() {
-		if err := tx.Rollback(); err != nil {
+		if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
 			log.Printf("transaction: Rollback error - %v", err)
 		}
 	}()

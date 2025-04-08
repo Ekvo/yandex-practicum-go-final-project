@@ -1,10 +1,15 @@
-// task - describe the Task object and its implementing interfaces
+// task - describes the Task object and its implementing interfaces
 package model
 
 import (
 	"context"
+	"errors"
 	"time"
+
+	"github.com/Ekvo/yandex-practicum-go-final-project/pkg/common"
 )
+
+var ErrModelAlgorithmNextDateIsNULL = errors.New("algorithm not selected")
 
 // max lenght to 'TaskModel' Fields
 const (
@@ -39,21 +44,27 @@ type TaskCreate interface {
 	SaveOneTask(ctx context.Context, data any) (uint, error)
 }
 
+type TaskFind interface {
+	FindTaskList(ctx context.Context, data any) ([]TaskModel, error)
+}
+
 // SetDate - metod of TaskModel find new executeble date to Task
 //
 // algoNewDate - selected algorithm - execute if 'date' less 'now' and 't.Repeat' not empty
 func (t *TaskModel) SetDate(date string, algoNextDate func(time.Time, string, string) (string, error)) error {
-	now := time.Now().UTC()
+	if algoNextDate == nil {
+		return ErrModelAlgorithmNextDateIsNULL
+	}
+	now := common.ReduceTimeToDay(time.Now().UTC())
 	if date == "" {
-		t.Date = now.Format(DateFormat)
-		return nil
+		date = now.Format(DateFormat)
 	}
 	dateToTime, err := time.Parse(DateFormat, date)
 	if err != nil {
 		return err
 	}
 	if dateToTime.UTC().Before(now.UTC()) {
-		if t.Repeat == "" || algoNextDate == nil {
+		if t.Repeat == "" {
 			t.Date = now.Format(DateFormat)
 			return nil
 		}

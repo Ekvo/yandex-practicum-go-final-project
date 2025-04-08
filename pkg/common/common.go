@@ -33,14 +33,22 @@ func (m Message) String() string {
 	return buff.String()
 }
 
+// ScanSQL - generic template for scan object from sql database
+//
+// example: func scanSomeObject[T ScanSQL](r T) (obj,err)
+// T - can be '*sql.Row', '*sql.Rows' ets.
+type ScanSQL interface {
+	Scan(dest ...any) error
+}
+
 // CreatePathWithFile - create a file and all directories to it if they do not exist
 func CreatePathWithFile(partOfFilePath string) error {
 	fileName := filepath.Base(partOfFilePath)
 	if fileName == "" {
-		return errors.New("incorrect path of file")
+		return errors.New("common: incorrect path of file")
 	}
 	if fileExtension := filepath.Ext(fileName); fileExtension != ".db" {
-		return errors.New("invalid file extension")
+		return errors.New("common: invalid file extension")
 	}
 	currentDir, err := os.Getwd()
 	if err != nil {
@@ -94,7 +102,7 @@ func EncodeJSON(ctx context.Context, w http.ResponseWriter, httpCode int, obj an
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(httpCode)
 	if err := json.NewEncoder(w).Encode(obj); err != nil {
-		log.Printf("json.Encode error - %v", err)
+		log.Printf("common: json.Encode error - %v", err)
 	}
 }
 

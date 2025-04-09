@@ -20,7 +20,7 @@ func NewTransport(mux *http.ServeMux) Transport {
 // Routes - logic of application routes
 func (t Transport) Routes(db multiTask) {
 	mux := t.ServeMux
-	muxTask := NewHandlerModel().TaskModelRoutes(db)
+	muxTask := NewHandlerModel().taskRoutes(db)
 
 	mux.Handle("/", http.FileServer(http.Dir(os.Getenv("TODO_WEB"))))
 	mux.Handle("/api/", http.StripPrefix("/api", muxTask))

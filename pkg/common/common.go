@@ -3,7 +3,6 @@ package common
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -55,7 +54,7 @@ func CreatePathWithFile(partOfFilePath string) error {
 		return err
 	}
 	fullPath := filepath.Join(currentDir, partOfFilePath)
-	onlyDir := strings.Replace(fullPath, fileName, "", 1)
+	onlyDir := strings.Replace(fullPath, fileName, "", -1)
 	if err := os.MkdirAll(onlyDir, 0o755); err != nil {
 		return err
 	}
@@ -94,12 +93,8 @@ func DecodeJSON(r *http.Request, obj any) error {
 // EncodeJSON - we write the status and the object type of 'json' to 'ResponseWriter'
 //
 // context Deadline not null - set status 408
-func EncodeJSON(ctx context.Context, w http.ResponseWriter, httpCode int, obj any) {
-	if ctx.Err() == context.DeadlineExceeded {
-		w.WriteHeader(http.StatusRequestTimeout)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
+func EncodeJSON(w http.ResponseWriter, httpCode int, obj any) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(httpCode)
 	if err := json.NewEncoder(w).Encode(obj); err != nil {
 		log.Printf("common: json.Encode error - %v", err)

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/model"
@@ -17,9 +18,13 @@ var ErrServicesFiledEmpty = errors.New("empty")
 // ErrServicesFiledLengthExceeded - field exceeded the maximum range
 var ErrServicesFiledLengthExceeded = errors.New("length exceeded")
 
+// ErrServicesWrongID - ID consists of more than just numbers
+var ErrServicesWrongID = errors.New("not numeric")
+
 // TaskValidtor - rules for deserialize object 'TaskModel'
 // task - set fields
 type TaskDecode struct {
+	ID      string `json:"id,omitempty"`
 	Date    string `json:"date"`
 	Title   string `json:"title"`
 	Comment string `json:"comment,omitempty"`
@@ -45,12 +50,20 @@ func (td TaskDecode) Model() model.TaskModel {
 // use map - common.Message look (../../pkg/common/common.go)
 //
 // for set td.task.Date use func - algoNextDate
-// important: set td.task.Repeat before call member of TaskModel 'SetDate' because 'repeat' use in member
+// important: set td.task.Repeat before call member of TaskDecode 'setDate' because 'repeat' use in it
 func (td *TaskDecode) Decode(r *http.Request, algoNextDate func(time.Time, string, string) (string, error)) error {
 	if err := common.DecodeJSON(r, td); err != nil {
 		return err
 	}
 	msgErr := make(common.Message)
+	taskID := uint(0)
+	if idSTR := td.ID; idSTR != "" {
+		if id, err := strconv.Atoi(idSTR); err != nil {
+			msgErr["id"] = ErrServicesWrongID.Error()
+		} else {
+			taskID = uint(id)
+		}
+	}
 	titleLen := len(td.Title)
 	if titleLen < 1 {
 		msgErr["title"] = ErrServicesFiledEmpty.Error()
@@ -64,18 +77,46 @@ func (td *TaskDecode) Decode(r *http.Request, algoNextDate func(time.Time, strin
 	if len(td.Repeat) > model.TaskRepeatLen {
 		msgErr["repeat"] = ErrServicesFiledLengthExceeded.Error()
 	}
-	// td.Date == "" - use in member of TaskModel 'SetDate'
-	if _, err := time.Parse(model.DateFormat, td.Date); err != nil && td.Date != "" {
-		msgErr["date"] = ErrServicesInvalidDate.Error()
+	taskDate, err := td.executeDate(algoNextDate)
+	if err != nil {
+		msgErr["date"] = err.Error()
 	}
 	if len(msgErr) != 0 {
 		return fmt.Errorf("task decode error - %v", msgErr)
 	}
+	td.task.ID = taskID
+	td.task.Date = taskDate
 	td.task.Title = td.Title
 	td.task.Comment = td.Comment
 	td.task.Repeat = td.Repeat
-	if err := td.task.SetDate(td.Date, algoNextDate); err != nil {
-		return err
-	}
 	return nil
+}
+
+// executeDate - metod of TaskDecode find executeble date
+//
+// 'nextDate' - selected algorithm - execute if 'date' less 'now' and 't.Repeat' not empty
+func (td *TaskDecode) executeDate(nextDate func(time.Time, string, string) (string, error)) (string, error) {
+	if nextDate == nil {
+		return "", model.ErrModelAlgorithmNextDateIsNULL
+	}
+	now := common.ReduceTimeToDay(time.Now().UTC())
+	date := td.Date
+	if date == "" {
+		date = now.Format(model.DateFormat)
+	}
+	dateToTime, err := time.Parse(model.DateFormat, date)
+	if err != nil {
+		return "", ErrServicesInvalidDate
+	}
+	if dateToTime.UTC().Before(now.UTC()) {
+		repeat := td.Repeat
+		if repeat == "" {
+			return now.Format(model.DateFormat), nil
+		}
+		if date, err = nextDate(now, date, repeat); err != nil {
+			return "", err
+		}
+		return date, nil
+	}
+	return date, nil
 }

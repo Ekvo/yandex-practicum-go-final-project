@@ -16,21 +16,31 @@ type TaskResponse struct {
 	Repeat  string `json:"repeat"`  // need omitempty
 }
 
+type TaskEncode struct {
+	model.TaskModel
+}
+
+// create a TaskResponse according to given rules
+func (te TaskEncode) Response() TaskResponse {
+	taskresponse := TaskResponse{
+		ID:      strconv.Itoa(int(te.ID)),
+		Date:    te.Date,
+		Title:   te.Title,
+		Comment: te.Comment,
+		Repeat:  te.Repeat,
+	}
+	return taskresponse
+}
+
 type TaskListEncode struct {
 	Tasks []model.TaskModel
 }
 
-// Response - create a TaskResponse list according to given rules
-func (te TaskListEncode) Response() []TaskResponse {
-	arrTaskresponse := make([]TaskResponse, len(te.Tasks))
-	for i, task := range te.Tasks {
-		arrTaskresponse[i] = TaskResponse{
-			ID:      strconv.Itoa(int(task.ID)),
-			Date:    task.Date,
-			Title:   task.Title,
-			Comment: task.Comment,
-			Repeat:  task.Repeat,
-		}
+// create a TaskResponse list
+func (tle TaskListEncode) Response() []TaskResponse {
+	arrTaskresponse := make([]TaskResponse, len(tle.Tasks))
+	for i, task := range tle.Tasks {
+		arrTaskresponse[i] = TaskEncode{task}.Response()
 	}
 	return arrTaskresponse
 }

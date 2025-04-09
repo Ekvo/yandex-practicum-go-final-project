@@ -11,6 +11,9 @@ import (
 
 var ErrModelAlgorithmNextDateIsNULL = errors.New("algorithm not selected")
 
+// ErrModelTaskDone - mark task - completed
+var ErrModelTaskDone = errors.New("task done")
+
 // max lenght to 'TaskModel' Fields
 const (
 	TaskTitleLen   = 255
@@ -25,17 +28,18 @@ type TaskModel struct {
 	ID uint
 
 	// task date in format '20060102'
-	// no more than 8 characters
+	// max 8 characters
 	Date string
 
-	// no more than 255 characters
+	// not empty
+	// max 255 characters
 	Title string
 
-	// no more than 2048 characters
+	// max 2048 characters
 	Comment string
 
 	// containing the repetition rules for the task.
-	// no more than 128 characters,
+	// max 128 characters,
 	Repeat string
 }
 
@@ -44,46 +48,40 @@ type TaskCreate interface {
 	SaveOneTask(ctx context.Context, data any) (uint, error)
 }
 
-type TaskFind interface {
+// TaskRead - read task from store
+type TaskRead interface {
+	FindOneTask(ctx context.Context, data any) (TaskModel, error)
 	FindTaskList(ctx context.Context, data any) ([]TaskModel, error)
 }
 
-// SetDate - metod of TaskModel find new executeble date to Task
+// TaskUpdate - write new data for a specific task
+type TaskUpdate interface {
+	NewDataTask(ctx context.Context, data any) error
+}
+
+// TaskDelete - delete task from store, if not exist -> error
+type TaskDelete interface {
+	ExpirationTask(ctx context.Context, data any) error
+}
+
+// UpdateDate - metod of TaskModel used only !_after_! creat task
 //
-// algoNewDate - selected algorithm - execute if 'date' less 'now' and 't.Repeat' not empty
-func (t *TaskModel) SetDate(date string, algoNextDate func(time.Time, string, string) (string, error)) error {
-	if algoNextDate == nil {
+// rules:
+// t.Repeat - empty -> task done -> delete
+// in other cases, update the date using 'nextDate' algorithm
+func (t *TaskModel) UpdateDate(nextDate func(time.Time, string, string) (string, error)) error {
+	if nextDate == nil {
 		return ErrModelAlgorithmNextDateIsNULL
 	}
-	now := common.ReduceTimeToDay(time.Now().UTC())
-	if date == "" {
-		date = now.Format(DateFormat)
+	repeat := t.Repeat
+	if repeat == "" {
+		return ErrModelTaskDone
 	}
-	dateToTime, err := time.Parse(DateFormat, date)
+	now := common.ReduceTimeToDay(time.Now().UTC())
+	date, err := nextDate(now, t.Date, repeat)
 	if err != nil {
 		return err
 	}
-	if dateToTime.UTC().Before(now.UTC()) {
-		if t.Repeat == "" {
-			t.Date = now.Format(DateFormat)
-			return nil
-		}
-		if t.Date, err = algoNextDate(now, date, t.Repeat); err != nil {
-			return err
-		}
-		return nil
-	}
 	t.Date = date
 	return nil
-}
-
-// TaskComplete - check before remove task from the base
-//
-// no 'repeat' and 'date' before or equal time.Now() -> task must be deleted from base
-func (t *TaskModel) TaskComplete() (bool, error) {
-	timeDate, err := time.Parse(DateFormat, t.Date)
-	if err != nil {
-		return false, err
-	}
-	return t.Repeat == "" && !timeDate.UTC().After(time.Now().UTC()), nil
 }

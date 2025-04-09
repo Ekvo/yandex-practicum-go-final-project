@@ -17,8 +17,13 @@ const (
 )
 
 type TaskProperty struct {
-	word  string
-	date  time.Time
+	// find in base by world : SELECT * FROM table WHERE colum LIKE world;
+	word string
+
+	// find by date
+	date time.Time
+
+	// use 'LIMIT' when searching in database
 	limit uint
 }
 

@@ -14,7 +14,10 @@ import (
 )
 
 // ErrDatabseAlreadyExist - if unique columns already exist in the storage
-var ErrDatabseAlreadyExist = errors.New("resource already exists")
+var ErrDataBaseAlreadyExist = errors.New("resource already exists")
+
+// ErrDatabaseNotFound = mark error - if object in base not exist
+var ErrDataBaseNotFound = errors.New("resource not found")
 
 func (s Source) NewTables(ctx context.Context, tables ...string) error {
 	newTables := func(ctx context.Context) error {
@@ -51,11 +54,85 @@ RETURNING id;`,
 			newTask.Repeat,  // 4
 		).Scan(&newTask.ID)
 		if err != nil {
-			return ErrDatabseAlreadyExist
+			return ErrDataBaseAlreadyExist
 		}
 		return nil
 	}
 	return newTask.ID, s.store.Transaction(ctx, createTask)
+}
+
+// FindOneTask - get ID from 'date' and return solo task if exist
+func (s Source) FindOneTask(ctx context.Context, data any) (model.TaskModel, error) {
+	taskID := data.(uint)
+	row := s.store.DB.QueryRowContext(ctx, `
+SELECT *
+FROM scheduler
+WHERE id = $1
+LIMIT 1;`, taskID)
+	task, err := scanTask[*sql.Row](row)
+	if err != nil || task.ID != taskID {
+		return model.TaskModel{}, ErrDataBaseNotFound
+	}
+	return task, nil
+}
+
+func scanTask[T common.ScanSQL](r T) (model.TaskModel, error) {
+	var task model.TaskModel
+	err := r.Scan(
+		&task.ID,
+		&task.Date,
+		&task.Title,
+		&task.Comment,
+		&task.Repeat,
+	)
+	return task, err
+}
+
+// NewDataTask - update task in database except id and scan id to check existence
+// use -> Transaction(ctx fucn(ctx)error)error
+func (s Source) NewDataTask(ctx context.Context, data any) error {
+	newTask := data.(model.TaskModel)
+	updateTask := func(ctx context.Context) error {
+		id := uint(0)
+		err := s.store.Tx.QueryRowContext(ctx, `
+UPDATE scheduler
+SET date    = $2,
+    title   = $3,
+    comment = $4,
+    repeat  = $5
+WHERE id = $1
+RETURNING id;`,
+			newTask.ID,
+			newTask.Date,
+			newTask.Title,
+			newTask.Comment,
+			newTask.Repeat,
+		).Scan(&id)
+		if err != nil || id != newTask.ID {
+			return ErrDataBaseNotFound
+		}
+		return nil
+	}
+	return s.store.Transaction(ctx, updateTask)
+}
+
+// ExpirationTask - remove task by ID with scan id
+// use -> Transaction(ctx fucn(ctx)error)error
+func (s Source) ExpirationTask(ctx context.Context, data any) error {
+	taskID := data.(uint)
+	deleteTask := func(ctx context.Context) error {
+		id := uint(0)
+		err := s.store.Tx.QueryRowContext(ctx, `
+DELETE
+from scheduler
+WHERE id = $1
+RETURNING id;`, taskID).Scan(&id)
+		if err != nil || id != taskID {
+			return ErrDataBaseNotFound
+		}
+		return nil
+	}
+	return s.store.Transaction(ctx, deleteTask)
 }
 
 // FindTaskList - get 'ptr' of type 'services.TaskProperty' from 'data' look (internal/services/taskproperty.go)
@@ -87,18 +164,6 @@ func (s Source) FindTaskList(ctx context.Context, data any) ([]model.TaskModel, 
 		return nil, err
 	}
 	return scanTaskList(rows)
-}
-
-func scanTask[T common.ScanSQL](r T) (model.TaskModel, error) {
-	var task model.TaskModel
-	err := r.Scan(
-		&task.ID,
-		&task.Date,
-		&task.Title,
-		&task.Comment,
-		&task.Repeat,
-	)
-	return task, err
 }
 
 func scanTaskList(rows *sql.Rows) ([]model.TaskModel, error) {

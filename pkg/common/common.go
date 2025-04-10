@@ -3,20 +3,31 @@ package common
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"mime"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // ErrCommonInvalidMedia - wrong media type in Request
 var ErrCommonInvalidMedia = errors.New("unexpected media type")
+
+// ErrCookieEmptyKey - return if value by key in cookie is empty
+var ErrCookieEmptyKey = errors.New("empty cookie key")
+
+// ErrCommonEmptySecretKey - use only in
+var ErrCommonEmptySecretKey = errors.New("secret key not found")
 
 // Message - body format for response
 type Message map[string]any
@@ -108,4 +119,75 @@ func BeginningOfMonth(t time.Time) time.Time {
 // ReduceTimeToDay - yaer,month,day
 func ReduceTimeToDay(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+}
+
+// HashPData - use 'sha256.Sum256' for hashing string line
+func HashData(line string) string {
+	hashLine := sha256.Sum256([]byte(line))
+	return hex.EncodeToString(hashLine[:])
+}
+
+// SecretKey -  key for jwt.Token
+// set in Init function -> look main.go
+var SecretKey = ""
+
+// TokenGenerator - create jwt token using specific key
+// set time of exploration in claims
+func TokenGenerator(content string) (string, error) {
+	if SecretKey == "" {
+		return "", ErrCommonEmptySecretKey
+	}
+	claims := jwt.MapClaims{
+		"content":     content,
+		"exploration": time.Now().UTC().Add(7 * 24 * time.Hour).Unix(),
+	}
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return jwtToken.SignedString([]byte(SecretKey))
+}
+
+// ReceiveValueFromToken - get value by key from jwt.Token
+//
+// 1. check time exploration -> if Expired - error
+// 2. get value by key
+func ReceiveValueFromToken[T any](token *jwt.Token, key string) (T, error) {
+	var obj T
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return obj, jwt.ErrTokenInvalidClaims
+	}
+	exploration, ok := claims["exploration"].(float64)
+	if !ok {
+		return obj, jwt.ErrInvalidKey
+	}
+	if int64(exploration) < time.Now().UTC().Unix() {
+		return obj, jwt.ErrTokenExpired
+	}
+	value, ok := claims[key].(T)
+	if !ok {
+		return obj, jwt.ErrInvalidKey
+	}
+	return value, nil
+}
+
+// ReadCookie - return value from Cookie by key
+func ReadCookie(r *http.Request, key string) (string, error) {
+	if key == "" {
+		return "", ErrCookieEmptyKey
+	}
+	cookie, err := r.Cookie(key)
+	if err != nil {
+		return "", err
+	}
+	return url.QueryUnescape(cookie.Value)
+}
+
+// CleanCookie - set all cookies -> MaxAge = -1
+func CleanCookie(w http.ResponseWriter, r *http.Request) {
+	for _, val := range r.Cookies() {
+		c := http.Cookie{
+			Value:  val.Name,
+			MaxAge: -1,
+		}
+		http.SetCookie(w, &c)
+	}
 }

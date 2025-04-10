@@ -27,7 +27,7 @@ const (
 	weak = 'w' // [w number(s)], example: w 1,2
 
 	// [m number(s)] or [m number(s) number(s)], example: m 1,2 5,7
-	//  m day(s)     or  m days      months
+	//  m day(s)     or  m day(s)      month(s)
 	month = 'm'
 	year  = 'y' //[y], example: y
 )
@@ -49,11 +49,11 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	if len(repeat) == 0 {
 		return "", ErrServicesWrongRepeat
 	}
-	now = common.ReduceTimeToDay(now)
 	taskDateStart, err := time.Parse(model.DateFormat, dstart)
 	if err != nil {
 		return "", ErrServicesInvalidDate
 	}
+	now = common.ReduceTimeToDay(now)
 	var newDate time.Time
 	switch ch := repeat[0]; ch {
 	case day:

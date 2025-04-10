@@ -90,13 +90,14 @@ func DecodeJSON(r *http.Request, obj any) error {
 	if err != nil || parse != "application/json" {
 		return ErrCommonInvalidMedia
 	}
-	reqBody := r.Body
-	defer func() {
-		if err := reqBody.Close(); err != nil {
-			log.Printf("common: r.Body.Close error - %v", err)
-		}
-	}()
-	dec := json.NewDecoder(reqBody)
+	if r.Body != nil {
+		defer func() {
+			if err := r.Body.Close(); err != nil {
+				log.Printf("common: r.Body.Close error - %v", err)
+			}
+		}()
+	}
+	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	return dec.Decode(obj)
 }

@@ -3,25 +3,56 @@ package transport
 
 import (
 	"errors"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/model"
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services"
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services/deserializer"
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services/serializer"
 	"github.com/Ekvo/yandex-practicum-go-final-project/pkg/common"
 )
 
+// ErrTransportInvalidParam - invalid param from r.URL.Query
 var ErrTransportInvalidParam = errors.New("invalid param")
+
+func Login(w http.ResponseWriter, r *http.Request) {
+	deserialize := deserializer.NewLoginDecode()
+	if err := deserialize.Decode(r); err != nil {
+		common.EncodeJSON(w, http.StatusUnprocessableEntity, common.Message{"error": err.Error()})
+		return
+	}
+	password := os.Getenv("TODO_PASSWORD")
+	login := deserialize.Model()
+	if !login.ValidPassword(password) {
+		common.EncodeJSON(w, http.StatusForbidden, common.Message{"error": model.ErrModelsLoginInvalidPassword.Error()})
+		return
+	}
+	serialize := serializer.TokenEncode{Content: "Task Access"}
+	tokenResponse, err := serialize.Response()
+	if err != nil {
+		common.EncodeJSON(w, http.StatusInternalServerError, common.Message{"error": err.Error()})
+		return
+	}
+	//http.SetCookie(w, &http.Cookie{
+	//	Name:    "token",
+	//	Value:   tokenResponse.Token,
+	//	Expires: time.Now().UTC().Add(7 * 24 * time.Hour),
+	//})
+	common.EncodeJSON(w, http.StatusOK, tokenResponse)
+}
 
 func TaskNew(db model.TaskCreate) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		deserializer := services.NewTaskDecode()
-		if err := deserializer.Decode(r, services.NextDate); err != nil {
+		deserialize := deserializer.NewTaskDecode()
+		if err := deserialize.Decode(r, services.NextDate); err != nil {
 			common.EncodeJSON(w, http.StatusUnprocessableEntity, common.Message{"error": err.Error()})
 			return
 		}
-		taskID, err := db.SaveOneTask(r.Context(), deserializer.Model())
+		taskID, err := db.SaveOneTask(r.Context(), deserialize.Model())
 		if err != nil {
 			common.EncodeJSON(w, http.StatusConflict, common.Message{"error": err.Error()})
 			return
@@ -42,7 +73,7 @@ func TaskRetrive(db model.TaskRead) http.HandlerFunc {
 			common.EncodeJSON(w, http.StatusNotFound, common.Message{"error": err.Error()})
 			return
 		}
-		serialize := services.TaskEncode{TaskModel: task}
+		serialize := serializer.TaskEncode{TaskModel: task}
 		common.EncodeJSON(w, http.StatusOK, serialize.Response())
 		//common.EncodeJSON( w, http.StatusOK, common.Message{"task": serialize.Response()})
 	}
@@ -50,12 +81,12 @@ func TaskRetrive(db model.TaskRead) http.HandlerFunc {
 
 func TaskChange(db model.TaskUpdate) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		deserializer := services.NewTaskDecode()
-		if err := deserializer.Decode(r, services.NextDate); err != nil {
+		deserialize := deserializer.NewTaskDecode()
+		if err := deserialize.Decode(r, services.NextDate); err != nil {
 			common.EncodeJSON(w, http.StatusUnprocessableEntity, common.Message{"error": err.Error()})
 			return
 		}
-		if err := db.NewDataTask(r.Context(), deserializer.Model()); err != nil {
+		if err := db.NewDataTask(r.Context(), deserialize.Model()); err != nil {
 			common.EncodeJSON(w, http.StatusNotFound, common.Message{"error": err.Error()})
 			return
 		}
@@ -120,7 +151,7 @@ func TaskRetriveList(db model.TaskRead) http.HandlerFunc {
 			common.EncodeJSON(w, http.StatusInternalServerError, common.Message{"error": err.Error()})
 			return
 		}
-		serialize := services.TaskListEncode{Tasks: tasks}
+		serialize := serializer.TaskListEncode{Tasks: tasks}
 		common.EncodeJSON(w, http.StatusOK, common.Message{"tasks": serialize.Response()})
 	}
 }
@@ -143,5 +174,8 @@ func TestNextDate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(newDate))
+	_, err = w.Write([]byte(newDate))
+	if err != nil {
+		log.Printf("route: http.ResponseWriter.Write error - %v", err)
+	}
 }

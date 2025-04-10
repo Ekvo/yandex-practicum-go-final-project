@@ -1,5 +1,5 @@
 // taskdecode - rules for decode Task object from http.request
-package services
+package deserializer
 
 import (
 	"errors"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/model"
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services"
 	"github.com/Ekvo/yandex-practicum-go-final-project/pkg/common"
 )
 
@@ -106,7 +107,7 @@ func (td *TaskDecode) executeDate(nextDate func(time.Time, string, string) (stri
 	}
 	dateToTime, err := time.Parse(model.DateFormat, date)
 	if err != nil {
-		return "", ErrServicesInvalidDate
+		return "", services.ErrServicesInvalidDate
 	}
 	if dateToTime.UTC().Before(now.UTC()) {
 		repeat := td.Repeat

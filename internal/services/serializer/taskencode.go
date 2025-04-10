@@ -1,5 +1,5 @@
 // taskencode - rules for encode Task object
-package services
+package serializer
 
 import (
 	"strconv"

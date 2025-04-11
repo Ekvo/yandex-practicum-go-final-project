@@ -6,7 +6,7 @@ import "time"
 const ctxTimeTableCreate = 10 * time.Second
 
 const (
-	Schema = `
+	schema = `
 CREATE TABLE IF NOT EXISTS scheduler
 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

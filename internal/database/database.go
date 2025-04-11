@@ -45,7 +45,7 @@ func InitDB() (*sql.DB, error) {
 	if install {
 		ctx, cancel := context.WithTimeout(context.Background(), ctxTimeTableCreate)
 		defer cancel()
-		_, err := db.ExecContext(ctx, Schema)
+		_, err := db.ExecContext(ctx, schema)
 		if err != nil {
 			return nil, fmt.Errorf("database: schema init error - %v", err)
 		}

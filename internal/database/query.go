@@ -19,24 +19,10 @@ var ErrDataBaseAlreadyExist = errors.New("resource already exists")
 // ErrDatabaseNotFound = mark error - if object in base not exist
 var ErrDataBaseNotFound = errors.New("resource not found")
 
-func (s Source) NewTables(ctx context.Context, tables ...string) error {
-	newTables := func(ctx context.Context) error {
-		for _, table := range tables {
-			_, err := s.store.Tx.ExecContext(ctx, table)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-	return s.store.Transaction(ctx, newTables)
-}
-
 // SaveOneTask - Implements the 'model.taskModel' interface - 'TaskCreate
 // use -> Transaction(ctx fucn(ctx)error)error look (./transaction.go)
 //
 // write task to database:
-// check on null 'comment' if comment="" write null
 // return unique ID of new Task if no error
 func (s Source) SaveOneTask(ctx context.Context, data any) (uint, error) {
 	newTask := data.(model.TaskModel)
@@ -102,11 +88,11 @@ SET date    = $2,
     repeat  = $5
 WHERE id = $1
 RETURNING id;`,
-			newTask.ID,
-			newTask.Date,
-			newTask.Title,
-			newTask.Comment,
-			newTask.Repeat,
+			newTask.ID,      //1
+			newTask.Date,    //2
+			newTask.Title,   //3
+			newTask.Comment, //4
+			newTask.Repeat,  //5
 		).Scan(&id)
 		if err != nil || id != newTask.ID {
 			return ErrDataBaseNotFound

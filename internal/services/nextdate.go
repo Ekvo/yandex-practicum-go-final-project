@@ -126,7 +126,7 @@ func nextDateByYear(now, taskDateStart time.Time, repeat string) (time.Time, err
 		years := nowYear - startYear
 		newDate = taskDateStart.AddDate(years, 0, 0).UTC()
 	}
-	// if the month or day or month and day is less than "now"
+	// if the month or day or (month and day) is less than "now"
 	if !newDate.UTC().After(now.UTC()) {
 		newDate = newDate.AddDate(1, 0, 0).UTC()
 	}

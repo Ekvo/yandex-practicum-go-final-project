@@ -11,7 +11,7 @@ import (
 	"github.com/Ekvo/yandex-practicum-go-final-project/pkg/common"
 )
 
-// Autorization
+// AuthZ (Autorization)
 //  1. check password from .env file
 //
 // password exist  -> 2 -> 3
@@ -24,7 +24,7 @@ import (
 //     write to log line content
 //
 //  3. call next(w,r)
-func Autorization(next http.HandlerFunc) http.HandlerFunc {
+func AuthZ(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		password := os.Getenv("TODO_PASSWORD")
 		if password != "" {

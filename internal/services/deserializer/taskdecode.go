@@ -95,6 +95,14 @@ func (td *TaskDecode) Decode(r *http.Request, algoNextDate func(time.Time, strin
 
 // executeDate - metod of TaskDecode find executeble date
 //
+// 1 or 2 or 2.1 or 2.2 or 3
+//
+// 1. date is not specified, today's date is taken
+// 2. date is less than today's date
+// 2.1. repeat == "" date = now
+// 2.2. find date with use 'nextDate'
+// 3. return td.Date
+//
 // 'nextDate' - selected algorithm - execute if 'date' less 'now' and 't.Repeat' not empty
 func (td *TaskDecode) executeDate(nextDate func(time.Time, string, string) (string, error)) (string, error) {
 	if nextDate == nil {

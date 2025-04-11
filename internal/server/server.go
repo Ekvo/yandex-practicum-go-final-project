@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 )
@@ -29,7 +28,7 @@ func NewSrvWihtHTTPServer(server *http.Server) Srv {
 func InitSRV(r http.Handler) Srv {
 	port := os.Getenv("TODO_PORT")
 	if port == "" {
-		port = strconv.Itoa(8000)
+		port = "8000"
 	}
 	return NewSrvWihtHTTPServer(&http.Server{
 		Addr:    net.JoinHostPort("", port),

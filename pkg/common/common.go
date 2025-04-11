@@ -29,6 +29,9 @@ var ErrCookieEmptyKey = errors.New("empty cookie key")
 // ErrCommonEmptySecretKey - use only in
 var ErrCommonEmptySecretKey = errors.New("secret key not found")
 
+// ErrCommonEmptyBody - use in DecodeJSON see below
+var ErrCommonEmptyBody = errors.New("request body is empty")
+
 // Message - body format for response
 type Message map[string]any
 
@@ -90,13 +93,14 @@ func DecodeJSON(r *http.Request, obj any) error {
 	if err != nil || parse != "application/json" {
 		return ErrCommonInvalidMedia
 	}
-	if r.Body != nil {
-		defer func() {
-			if err := r.Body.Close(); err != nil {
-				log.Printf("common: r.Body.Close error - %v", err)
-			}
-		}()
+	if r.Body == nil {
+		return ErrCommonEmptyBody
 	}
+	defer func() {
+		if err := r.Body.Close(); err != nil {
+			log.Printf("common: r.Body.Close error - %v", err)
+		}
+	}()
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	return dec.Decode(obj)

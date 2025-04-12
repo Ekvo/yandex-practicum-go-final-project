@@ -64,7 +64,11 @@ docker-compose --env-file ./init/.env up -d
 
 # Technical description
   
-**Main principles:** REST-API, SOLID, DTO(Data Transfer Object)  
+**Main principles:**  
+* REST-API,
+* SOLID,
+* DTO(Data Transfer Object)  
+
 This APP `save`,` read`, `update` or `delete` task(**CRUD**) and check `Authorization`(jwt.Token)
 
 [docs link](https://github.com/Ekvo/yandex-practicum-go-final-project/tree/tmp-branch/docs/docs.go "https://github.com/Ekvo/yandex-practicum-go-final-project/tree/tmp-branch/docs/docs.go") -  documentation ./docs/docs.go
@@ -135,23 +139,50 @@ README.md
 | SQLite    | storage of task list |  
 | ServerMux |        router        | 
 
- * [Golang - v1.23.0 link](https://go.dev/dl/ "https://go.dev/dl/") - fast and progressive language
-
- * SQL - SQLite - mobile and easy to implement
+ #### [Golang - v1.23.0 link](https://go.dev/dl/ "https://go.dev/dl/") - fast and progressive language
 ```bash
-go get modernc.org/sqlite # driver v1.37.0 
+# after clone to you local repository
+go run main.go
 ```
 
- * [ServerMux](https://pkg.go.dev/net/http "https://pkg.go.dev/net/http") - standard and reliable
+#### SQL - SQLite - mobile and easy to implement
+```bash
+# driver v1.37.0 
+go get modernc.org/sqlite 
+```
 
- * For get .env file in main.go and test
+#### [ServerMux](https://pkg.go.dev/net/http "https://pkg.go.dev/net/http") - standard and reliable
+
+#### For get .env file in main.go and test files
 ```bash
 go get github.com/joho/godotenv # v1.5.1
 ```
- * Authorization use jwt.Token 
+#### Authorization use jwt.Token 
 ```bash
 go get github.com/golang-jwt/jwt/v5 # v5.2.2
  ```
+#### Tests
+Some directories have file **coverage**, go to the folder you are interested in and call:
+```bash
+go tool cover -html=coverage
+```
+We can criate **coverage**:
+```bash
+# . - path
+go test . -coverprofile=coverage.out
+```
+All test call
+```bash
+# for use ./test need run serve
+go run main.go
+# then 
+go test ./...
+```
+
+
+
+
+
 
 p.s. Thanks for your time:)
 

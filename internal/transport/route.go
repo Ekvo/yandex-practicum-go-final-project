@@ -37,11 +37,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		common.EncodeJSON(w, http.StatusInternalServerError, common.Message{"error": err.Error()})
 		return
 	}
-	//http.SetCookie(w, &http.Cookie{
-	//	Name:    "token",
-	//	Value:   tokenResponse.Token,
-	//	Expires: time.Now().UTC().Add(7 * 24 * time.Hour),
-	//})
+	http.SetCookie(w, &http.Cookie{
+		Name:    "token",
+		Value:   tokenResponse.Token,
+		Expires: time.Now().UTC().Add(7 * 24 * time.Hour),
+	})
 	common.EncodeJSON(w, http.StatusOK, tokenResponse)
 }
 

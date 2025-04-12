@@ -263,6 +263,9 @@ func monthAndDay(repeat string) ([]any, error) {
 			continue
 		}
 		if unicode.IsDigit(ch) || ch == '-' {
+			if ch == '-' && unicode.IsDigit(rune(repeat[i-1])) { // m -1-1,31
+				return nil, ErrServicesWrongRepeat
+			}
 			start := i
 			for i++; i < n && unicode.IsDigit(rune(repeat[i])); i++ {
 			}

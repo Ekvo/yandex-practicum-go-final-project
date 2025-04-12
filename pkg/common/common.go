@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -35,10 +36,21 @@ var ErrCommonEmptyBody = errors.New("request body is empty")
 // Message - body format for response
 type Message map[string]any
 
+//	String - many keys in message
+//
+// sort keys - result was predictable
 func (m Message) String() string {
 	buff := &bytes.Buffer{}
-	for k, v := range m {
-		_, _ = fmt.Fprintf(buff, `{%s : %v},`, k, v)
+	n := len(m)
+	keys := make([]string, 0, n)
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+	for _, key := range keys {
+		_, _ = fmt.Fprintf(buff, `{%s : %v},`, key, m[key])
 	}
 	if n := buff.Len(); n != 0 {
 		buff.Truncate(n - 1)

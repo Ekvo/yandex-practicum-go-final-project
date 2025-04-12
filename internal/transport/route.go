@@ -57,7 +57,7 @@ func TaskNew(db model.TaskCreate) http.HandlerFunc {
 			common.EncodeJSON(w, http.StatusConflict, common.Message{"error": err.Error()})
 			return
 		}
-		common.EncodeJSON(w, http.StatusCreated, common.Message{"id": taskID})
+		common.EncodeJSON(w, http.StatusCreated, common.Message{"id": strconv.Itoa(int(taskID))})
 	}
 }
 
@@ -86,7 +86,12 @@ func TaskChange(db model.TaskUpdate) http.HandlerFunc {
 			common.EncodeJSON(w, http.StatusUnprocessableEntity, common.Message{"error": err.Error()})
 			return
 		}
-		if err := db.NewDataTask(r.Context(), deserialize.Model()); err != nil {
+		task := deserialize.Model()
+		if task.ID == 0 {
+			common.EncodeJSON(w, http.StatusUnprocessableEntity, common.Message{"error": deserializer.ErrServicesWrongID.Error()})
+			return
+		}
+		if err := db.NewDataTask(r.Context(), task); err != nil {
 			common.EncodeJSON(w, http.StatusNotFound, common.Message{"error": err.Error()})
 			return
 		}

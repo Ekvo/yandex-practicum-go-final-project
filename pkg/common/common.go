@@ -130,12 +130,12 @@ func EncodeJSON(w http.ResponseWriter, httpCode int, obj any) {
 }
 
 func BeginningOfMonth(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
+	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, t.Location())
 }
 
 // ReduceTimeToDay - yaer,month,day
 func ReduceTimeToDay(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 }
 
 // HashPData - use 'sha256.Sum256' for hashing string line

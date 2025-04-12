@@ -77,7 +77,7 @@ func (t *TaskModel) UpdateDate(nextDate func(time.Time, string, string) (string,
 	if repeat == "" {
 		return ErrModelTaskDone
 	}
-	now := common.ReduceTimeToDay(time.Now().UTC())
+	now := common.ReduceTimeToDay(time.Now())
 	date, err := nextDate(now, t.Date, repeat)
 	if err != nil {
 		return err

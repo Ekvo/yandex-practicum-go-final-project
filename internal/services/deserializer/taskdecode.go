@@ -108,7 +108,7 @@ func (td *TaskDecode) executeDate(nextDate func(time.Time, string, string) (stri
 	if nextDate == nil {
 		return "", model.ErrModelAlgorithmNextDateIsNULL
 	}
-	now := common.ReduceTimeToDay(time.Now().UTC())
+	now := common.ReduceTimeToDay(time.Now())
 	date := td.Date
 	if date == "" {
 		date = now.Format(model.DateFormat)

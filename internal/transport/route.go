@@ -171,7 +171,7 @@ func TestNextDate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if timeNowStr == "" {
-		now = time.Now().UTC()
+		now = time.Now()
 	}
 	newDate, err := services.NextDate(now, dstart, repeat)
 	if err != nil {

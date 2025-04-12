@@ -70,7 +70,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return newDate.UTC().Format(model.DateFormat), nil
+	return newDate.Format(model.DateFormat), nil
 }
 
 const (
@@ -84,15 +84,15 @@ func nextDateByDay(now, taskDateStart time.Time, repeat string) (time.Time, erro
 	if err != nil || days < minDay || days > maxDay {
 		return time.Time{}, ErrServicesWrongRepeat
 	}
-	nowUnix := now.UTC().Unix()
-	startUnix := taskDateStart.UTC().Unix()
+	nowUnix := now.Unix()
+	startUnix := taskDateStart.Unix()
 	daysToSeconds := int64(days * daySeconds)
 	newDate := time.Time{}
 	if startUnix < nowUnix {
 		segments := (nowUnix - startUnix) / daysToSeconds
-		newDate = time.Unix(startUnix+(segments+1)*daysToSeconds, 0).UTC()
+		newDate = time.Unix(startUnix+(segments+1)*daysToSeconds, 0)
 	} else {
-		newDate = time.Unix(startUnix+daysToSeconds, 0).UTC()
+		newDate = time.Unix(startUnix+daysToSeconds, 0)
 	}
 	return newDate, nil
 }
@@ -119,16 +119,16 @@ func nextDateByYear(now, taskDateStart time.Time, repeat string) (time.Time, err
 	if len(repeat) != 1 {
 		return time.Time{}, ErrServicesWrongRepeat
 	}
-	newDate := taskDateStart.AddDate(1, 0, 0).UTC()
+	newDate := taskDateStart.AddDate(1, 0, 0)
 	nowYear := now.Year()
 	startYear := taskDateStart.Year()
 	if startYear < nowYear {
 		years := nowYear - startYear
-		newDate = taskDateStart.AddDate(years, 0, 0).UTC()
+		newDate = taskDateStart.AddDate(years, 0, 0)
 	}
 	// if the month or day or (month and day) is less than "now"
 	if !newDate.UTC().After(now.UTC()) {
-		newDate = newDate.AddDate(1, 0, 0).UTC()
+		newDate = newDate.AddDate(1, 0, 0)
 	}
 	return newDate, nil
 }
@@ -141,11 +141,11 @@ func nextDateByWeek(now, taskDateStart time.Time, repeat string) (time.Time, err
 		return time.Time{}, err
 	}
 	newDate := taskDateStart
-	if newDate.Before(now) {
+	if newDate.UTC().Before(now.UTC()) {
 		newDate = now
 	}
 	for i := 0; i < maxDay; i++ {
-		newDate = newDate.AddDate(0, 0, 1).UTC()
+		newDate = newDate.AddDate(0, 0, 1)
 		if days[newDate.Weekday()] {
 			return newDate, nil
 		}
@@ -213,12 +213,12 @@ func nextDateByMonth(now, taskDateStart time.Time, repeat string) (time.Time, er
 		month = data[1].([]bool)
 	}
 	newDate := taskDateStart
-	if !newDate.After(now) {
-		newDate = now.AddDate(0, 0, 1).UTC()
+	if !newDate.UTC().After(now.UTC()) {
+		newDate = now.AddDate(0, 0, 1)
 	}
 	for m, i := len(month), 0; i < maxDay; i++ {
 		if m != 0 && !month[newDate.Month()] {
-			newDate = newDate.AddDate(0, 1, 0).UTC()
+			newDate = newDate.AddDate(0, 1, 0)
 			if newDate.Day() != 1 {
 				newDate = common.BeginningOfMonth(newDate)
 			}
@@ -228,14 +228,14 @@ func nextDateByMonth(now, taskDateStart time.Time, repeat string) (time.Time, er
 			return newDate, nil
 		}
 		if days[lastDayMonth] &&
-			newDate.AddDate(0, 0, 1).UTC().Day() == 1 {
+			newDate.AddDate(0, 0, 1).Day() == 1 {
 			return newDate, nil
 		}
 		if days[penultimateDayMonth] &&
-			newDate.AddDate(0, 0, 2).UTC().Day() == 1 {
+			newDate.AddDate(0, 0, 2).Day() == 1 {
 			return newDate, nil
 		}
-		newDate = newDate.AddDate(0, 0, 1).UTC()
+		newDate = newDate.AddDate(0, 0, 1)
 	}
 	return time.Time{}, ErrServicUnexpectedBehavior
 }

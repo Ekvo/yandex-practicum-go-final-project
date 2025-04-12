@@ -26,10 +26,12 @@ func NewSource(db *sql.DB) Source {
 // 2. check file, if not exists -> create database file and install = true
 // 3. sql.Open
 // 4. if install = true -> create table(s)
-func InitDB() (*sql.DB, error) {
-	pathDB := os.Getenv("TODO_DBFILE")
-	if pathDB == "" {
-		pathDB = "./storage/scheduler.db"
+func InitDB(test bool) (*sql.DB, error) {
+	pathDB := ""
+	if test {
+		pathDB = os.Getenv("TODO_TEST_DBFILE")
+	} else {
+		pathDB = os.Getenv("TODO_DBFILE")
 	}
 	install := false
 	if _, err := os.Stat(pathDB); err != nil {

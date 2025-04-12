@@ -23,7 +23,7 @@ func init() {
 }
 
 func main() {
-	db, err := database.InitDB()
+	db, err := database.InitDB(false)
 	if err != nil {
 		log.Fatalf("main: error - %v", err)
 	}

@@ -128,7 +128,7 @@ func (s Source) FindTaskList(ctx context.Context, data any) ([]model.TaskModel, 
 
 	query.WriteString("SELECT * FROM scheduler")
 	if property.IsWord() {
-		query.WriteString("\nWHERE title LIKE $1 OR comment LIKE $1\nORDER BY date ASC")
+		query.WriteString("\nWHERE title LIKE $1 OR comment LIKE LOWER($1)")
 		args = append(args, fmt.Sprintf(`%%%s%%`, property.PassWord()))
 		numberOfArg++
 	} else if property.IsDate() {
@@ -136,7 +136,7 @@ func (s Source) FindTaskList(ctx context.Context, data any) ([]model.TaskModel, 
 		args = append(args, property.PassDate().UTC().Format(model.DateFormat))
 		numberOfArg++
 	}
-	query.WriteString(fmt.Sprintf("\nLIMIT $%d;", numberOfArg))
+	query.WriteString(fmt.Sprintf("\nORDER BY date ASC\nLIMIT $%d;", numberOfArg))
 	args = append(args, property.PassLimit())
 
 	rows, err := s.store.DB.QueryContext(ctx, query.String(), args...)

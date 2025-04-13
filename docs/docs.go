@@ -1,8 +1,12 @@
 // This application: gets, saves, reads, updates and deletes a Task object, using the following patterns and tools.
 
 // IMPORTANT: NOT TIME READ DOCS
-//           1. password to application is              - qwert12345
-//           2. time life of Token in tests/settings.go - 7 days     start (~ 11.04.25 10:00)
+//				 1. URL to start                            - http://127.0.0.1:8000 or http://127.0.0.1:8000/login.html
+//           2. password to application is              - qwert12345
+//           3. cookie life                             - 7 days     after autorization
+//           4. test/settings.go
+//           4.1. time life of Token in tests/settings.go - 7 days     start (~ 11.04.25 10:00)
+//                after 7 days need set new. -> look bellow
 
 // REST API property and features.
 
@@ -166,4 +170,18 @@ jwt.Token - github.com/golang-jwt/jwt/v5
  * func      - TokenGenerator        - generate token with (jwt.MapClaims) - content and time exploration
  * func      - ReceiveValueFromToken - chech time exploration and return value form token by key
 */
+
+/*
+ - Create new Token to test/settings.go
+ ---------------------------------------------------------------------------
+ 1. run server (go run main.go)
+ 2. in other terminal:
+curl -X POST -H "Content-Type: application/json" -d '{"password":"qwert12345"}' http://localhost:8000/api/signin
+
+you should get a message like:
+{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb250ZW50IjoiVGFzayBBY2Nlc3MiLCJleHBsb3JhdGlvbiI6MTc0NTEzODQ0M30.NGTz_-RhkPEEZZJ5uIku4DPtC0pCXQ6fjfrJCdM7M80"}
+
+ 3. copy jwtLINE from ("token":"jwtLINE") and set in test/settings.go -> Token = `jwtLINE`
+*/
+
 package docs

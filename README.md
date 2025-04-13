@@ -176,6 +176,14 @@ All test call
 # for use ./test need run serve
 go test ./...
 ```
+**worning**:  
+Time life of Token in tests/settings.go - 7 days     start (~ 11.04.25 10:00)  
+Create new token:
+```http request 
+curl -X POST -H "Content-Type: application/json" -d '{"password":"qwert12345"}' http://localhost:8000/api/signin
+```
+after - set test/settings.go Token  
+more ditails in docs.go
 
 p.s. Thanks for your time:)
 

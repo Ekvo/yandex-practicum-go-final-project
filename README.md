@@ -174,15 +174,8 @@ go test . -coverprofile=coverage.out
 All test call
 ```bash
 # for use ./test need run serve
-go run main.go
-# then 
 go test ./...
 ```
-
-
-
-
-
 
 p.s. Thanks for your time:)
 

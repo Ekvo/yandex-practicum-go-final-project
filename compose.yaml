@@ -1,0 +1,6 @@
+services:
+  server:
+    image: scheduler:${TODO_VERSION}
+    build: .
+    ports:
+      - "${TODO_PORT}:${TODO_PORT}"

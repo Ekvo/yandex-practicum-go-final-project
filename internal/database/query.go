@@ -13,9 +13,6 @@ import (
 	"github.com/Ekvo/yandex-practicum-go-final-project/pkg/common"
 )
 
-// ErrDatabseAlreadyExist - if unique columns already exist in the storage
-var ErrDataBaseAlreadyExist = errors.New("resource already exists")
-
 // ErrDatabaseNotFound = mark error - if object in base not exist
 var ErrDataBaseNotFound = errors.New("resource not found")
 
@@ -39,10 +36,7 @@ RETURNING id;`,
 			newTask.Comment, // 3 // if empty need write null, but _test_ need ""
 			newTask.Repeat,  // 4
 		).Scan(&newTask.ID)
-		if err != nil {
-			return ErrDataBaseAlreadyExist
-		}
-		return nil
+		return err
 	}
 	return newTask.ID, s.store.Transaction(ctx, createTask)
 }
@@ -56,10 +50,10 @@ FROM scheduler
 WHERE id = $1
 LIMIT 1;`, taskID)
 	task, err := scanTask[*sql.Row](row)
-	if err != nil || task.ID != taskID {
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
 		return model.TaskModel{}, ErrDataBaseNotFound
 	}
-	return task, nil
+	return task, err
 }
 
 func scanTask[T common.ScanSQL](r T) (model.TaskModel, error) {
@@ -94,10 +88,10 @@ RETURNING id;`,
 			newTask.Comment, //4
 			newTask.Repeat,  //5
 		).Scan(&id)
-		if err != nil || id != newTask.ID {
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			return ErrDataBaseNotFound
 		}
-		return nil
+		return err
 	}
 	return s.store.Transaction(ctx, updateTask)
 }
@@ -113,10 +107,10 @@ DELETE
 from scheduler
 WHERE id = $1
 RETURNING id;`, taskID).Scan(&id)
-		if err != nil || id != taskID {
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			return ErrDataBaseNotFound
 		}
-		return nil
+		return err
 	}
 	return s.store.Transaction(ctx, deleteTask)
 }

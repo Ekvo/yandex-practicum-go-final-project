@@ -17,9 +17,10 @@ import (
 // password exist  -> 2 -> 3
 // password !exist -> 3
 //
-//  2. get token.(string) from ReadCookie  - if error - clean cookie - redirect -> /api/signin
-//     parse jwt.Token from token.(string) - if error - clean cookie - redirect -> /api/signin
-//     get content with check exploration in ReceiveValueFromToken - if error - clean cookie - - redirect -> /api/signin
+//  2. SecretKey                           - empty -> error          - end
+//     get token.(string) from ReadCookie  - if error - clean cookie - end
+//     parse jwt.Token from token.(string) - if error - clean cookie - end
+//     get content with check exploration in ReceiveValueFromToken - if error - clean cookie - end
 //     write to log line content
 //
 //  3. call next(w,r)
@@ -30,7 +31,7 @@ func AuthZ(next http.HandlerFunc) http.HandlerFunc {
 			value, err := common.ReadCookie(r, "token")
 			if err != nil {
 				common.CleanCookie(w, r)
-				http.Redirect(w, r, "/api/signin", http.StatusUnauthorized)
+				common.EncodeJSON(w, http.StatusUnauthorized, common.Message{"error": err.Error()})
 				return
 			}
 			token, err := jwt.Parse(value, func(token *jwt.Token) (any, error) {
@@ -44,13 +45,13 @@ func AuthZ(next http.HandlerFunc) http.HandlerFunc {
 			})
 			if err != nil {
 				common.CleanCookie(w, r)
-				http.Redirect(w, r, "/api/signin", http.StatusUnauthorized)
+				common.EncodeJSON(w, http.StatusUnauthorized, common.Message{"error": err.Error()})
 				return
 			}
 			content, err := common.ReceiveValueFromToken[string](token, "content")
 			if err != nil {
 				common.CleanCookie(w, r)
-				http.Redirect(w, r, "/api/signin", http.StatusUnauthorized)
+				common.EncodeJSON(w, http.StatusUnauthorized, common.Message{"error": err.Error()})
 				return
 			}
 			log.Print(content)

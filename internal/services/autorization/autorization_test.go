@@ -52,7 +52,7 @@ func TestAuthZ(t *testing.T) {
 		{
 			cookie:    false,
 			resCode:   http.StatusUnauthorized,
-			resRegexp: `<a href="/api/signin">Unauthorized</a>.`,
+			resRegexp: `{"error":"http: named cookie not present"}`,
 			msg:       `wrong auth with JSON error`,
 		},
 	}

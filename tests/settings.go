@@ -1,7 +1,26 @@
 package tests
 
-var Port = 7540
-var DBFile = "../scheduler.db"
-var FullNextDate = false
-var Search = false
-var Token = ``
+import (
+	"log"
+	"os"
+	"path/filepath"
+
+	"github.com/joho/godotenv"
+)
+
+func init() {
+	if err := godotenv.Load("../init/.env"); err != nil {
+		log.Printf("settings: no .env file - %v", err)
+	}
+	if err := os.Setenv("TODO_DBFILE", filepath.Join("../", os.Getenv("TODO_DBFILE"))); err != nil {
+		log.Printf("settings: os.Setenv(TODO_DBFILE) - %v", err)
+	}
+}
+
+var (
+	Port         = 7540
+	DBFile       = "../scheduler.db"
+	FullNextDate = true
+	Search       = true
+	Token        = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb250ZW50IjoiVGFzayBBY2Nlc3MiLCJleHBsb3JhdGlvbiI6MTc0NTU5MzcwOH0.UbQaK18WH7mjIOcNPJbmA931sNqJRGOmhxahWpq3MD4`
+)

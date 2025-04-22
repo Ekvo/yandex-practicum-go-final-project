@@ -86,7 +86,7 @@ func (td *TaskDecode) Decode(r *http.Request) error {
 		}
 	}
 	if len(msgErr) != 0 {
-		return fmt.Errorf("task decode error - %s", msgErr.String())
+		return fmt.Errorf("taskdecode: error - %s", msgErr.String())
 	}
 	td.task.ID = taskID
 	td.task.Date = date

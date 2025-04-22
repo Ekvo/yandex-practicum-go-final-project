@@ -43,6 +43,6 @@ func (ld *LoginDecode) Decode(r *http.Request) error {
 	if len(msgErr) > 0 {
 		return fmt.Errorf("login decode error - %s", msgErr.String())
 	}
-	ld.login.Password = common.HashData(ld.Password)
+	ld.login.Password = ld.Password
 	return nil
 }

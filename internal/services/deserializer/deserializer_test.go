@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services/nextdate"
 	"github.com/Ekvo/yandex-practicum-go-final-project/pkg/common"
 )
 
@@ -20,7 +19,7 @@ func TestLoginDecode_Decode(t *testing.T) {
 	mux.HandleFunc("POST /test", func(w http.ResponseWriter, r *http.Request) {
 		deserialize := NewLoginDecode()
 		if err := deserialize.Decode(r); err != nil {
-			common.EncodeJSON(w, http.StatusUnprocessableEntity, common.Message{"error": err.Error()})
+			common.EncodeJSON(w, http.StatusBadRequest, common.Message{"error": err.Error()})
 			return
 		}
 		common.EncodeJSON(w, http.StatusOK, common.Message{"login": "approve"})
@@ -40,7 +39,7 @@ func TestLoginDecode_Decode(t *testing.T) {
 		},
 		{
 			body:      `{"password":"qwer"}`,
-			resCode:   http.StatusUnprocessableEntity,
+			resCode:   http.StatusBadRequest,
 			resRegexp: `{"error":"login decode error - {password:short lenght}"}`,
 			msg:       `invalid decode`,
 		},
@@ -64,7 +63,7 @@ func TestTaskDecode_Decode(t *testing.T) {
 
 	mux.HandleFunc("POST /test", func(w http.ResponseWriter, r *http.Request) {
 		deserialize := NewTaskDecode()
-		if err := deserialize.Decode(r, nextdate.NextDate); err != nil {
+		if err := deserialize.Decode(r); err != nil {
 			common.EncodeJSON(w, http.StatusUnprocessableEntity, common.Message{"error": err.Error()})
 			return
 		}
@@ -86,7 +85,7 @@ func TestTaskDecode_Decode(t *testing.T) {
 		{
 			body:      `{"id":"no numeric","date":"ffff","title":"","comment":"my comment","repeat":"sgfgasoigadgiohadioghdwioghwdijoghwiojghwijghiadjghjdklsngdjsfghueiroqwghjwdighveioqghdjiwbviqejghvkjwdbvieqwghijenvbijqweghiqejnbviodjfvhbqeioghvdklajfbqeioghqdiojvbqdiojghiqeghqeojvhiqepufvhipjvhqeighiqeprhvwdiofjvhiqepughvqjipevhqeiopghqiepghqiejpghiqefjghvqeigv"}`,
 			resCode:   http.StatusUnprocessableEntity,
-			resRegexp: `{"error":"task decode error - {date:invalid date},{id:not numeric},{repeat:length exceeded},{title:empty}"}`,
+			resRegexp: `{"error":"taskdecode: error - {date:invalid date format},{id:not numeric},{repeat:length exceeded},{title:empty}"}`,
 			msg:       `invalid decode`,
 		},
 	}
@@ -102,5 +101,4 @@ func TestTaskDecode_Decode(t *testing.T) {
 		assert.Equal(t, test.resCode, w.Code, "status code not equal "+test.msg)
 		assert.Regexp(t, test.resRegexp, w.Body.String(), "other body from response "+test.msg)
 	}
-
 }

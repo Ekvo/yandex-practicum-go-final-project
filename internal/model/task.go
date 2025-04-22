@@ -4,9 +4,6 @@ package model
 import (
 	"context"
 	"errors"
-	"time"
-
-	"github.com/Ekvo/yandex-practicum-go-final-project/pkg/common"
 )
 
 var ErrModelAlgorithmNextDateIsNULL = errors.New("algorithm not selected")
@@ -62,34 +59,4 @@ type TaskUpdate interface {
 // TaskDelete - delete task from store, if not exist -> error
 type TaskDelete interface {
 	ExpirationTask(ctx context.Context, data any) error
-}
-
-// UpdateDate - metod of TaskModel used only !_after_! creat task
-//
-// rules:
-// 1. t.Repeat - empty -> task done -> delete
-// 2. update the date using 'nextDate' algorithm
-// 2.1 if now Before t.Date -> now = t.Date
-func (t *TaskModel) UpdateDate(nextDate func(time.Time, string, string) (string, error)) error {
-	if nextDate == nil {
-		return ErrModelAlgorithmNextDateIsNULL
-	}
-	repeat := t.Repeat
-	if repeat == "" {
-		return ErrModelTaskDone
-	}
-	oldDate, err := time.Parse(DateFormat, t.Date)
-	if err != nil {
-		return err
-	}
-	now := common.ReduceTimeToDay(time.Now())
-	if now.UTC().Before(oldDate.UTC()) {
-		now = oldDate
-	}
-	date, err := nextDate(now, t.Date, repeat)
-	if err != nil {
-		return err
-	}
-	t.Date = date
-	return nil
 }

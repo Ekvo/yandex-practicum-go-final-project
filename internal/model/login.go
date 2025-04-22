@@ -1,9 +1,7 @@
 // login - describes the Login object
 package model
 
-import "errors"
-
-var ErrModelsLoginInvalidPassword = errors.New("invalid password")
+import "context"
 
 // password lenght [8,64]
 const (
@@ -15,7 +13,8 @@ type LoginModel struct {
 	Password string
 }
 
-// ValidPassword - compare password from .env file "TODO_PASSWORD"
-func (lm LoginModel) ValidPassword(password string) bool {
-	return lm.Password == password
+// LoginRead - check for and compare user password
+type LoginRead interface {
+	ValidLogin(ctx context.Context, login LoginModel) bool
+	PasswordExist(ctx context.Context) bool
 }

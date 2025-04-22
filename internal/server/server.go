@@ -12,6 +12,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/config"
 )
 
 // ServerTimeoutShut - use in 'ListenAndServeAndShut' look down
@@ -21,24 +23,19 @@ type Srv struct {
 	*http.Server
 }
 
-func NewSrvWihtHTTPServer(server *http.Server) Srv {
-	return Srv{Server: server}
-}
-
-func InitSRV(r http.Handler) Srv {
-	port := os.Getenv("TODO_PORT")
-	if port == "" {
-		port = "8000"
+func InitSRV(cfg *config.Config, router http.Handler) Srv {
+	return Srv{
+		Server: &http.Server{
+			Addr:    net.JoinHostPort("", cfg.ServerPort),
+			Handler: router,
+		},
 	}
-	return NewSrvWihtHTTPServer(&http.Server{
-		Addr:    net.JoinHostPort("", port),
-		Handler: r,
-	})
 }
 
 // ListenAndServeAndShut - application wait SIGTERM or SYGINT - signal to inform that it is time to shutdovn
 func (s Srv) ListenAndServeAndShut() error {
 	go func() {
+		log.Print("server: listen and serve - start\n")
 		if err := s.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server: HTTP server error - %v", err)
 		}
@@ -52,7 +49,7 @@ func (s Srv) ListenAndServeAndShut() error {
 	defer cancel()
 
 	if err := s.Shutdown(ctx); err != nil {
-		return fmt.Errorf("server: HTTP shutdown error - %v", err)
+		return fmt.Errorf("server: HTTP shutdown error - %w", err)
 	}
 	log.Print("server: shutdown complete\n")
 	return nil

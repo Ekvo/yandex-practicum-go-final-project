@@ -41,7 +41,7 @@ func (ld *LoginDecode) Decode(r *http.Request) error {
 		msgErr["password"] = ErrServicesFiledLengthExceeded.Error()
 	}
 	if len(msgErr) > 0 {
-		return fmt.Errorf("login decode error - %v", msgErr.String())
+		return fmt.Errorf("login decode error - %s", msgErr.String())
 	}
 	ld.login.Password = common.HashData(ld.Password)
 	return nil

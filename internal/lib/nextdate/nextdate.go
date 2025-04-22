@@ -1,5 +1,5 @@
 // nextdate - describes function 'NextDate' - algorithm for finding  next date for task
-package services
+package nextdate
 
 import (
 	"errors"
@@ -11,15 +11,19 @@ import (
 	"github.com/Ekvo/yandex-practicum-go-final-project/pkg/common"
 )
 
-// ErrServicesInvalidDate - if bad result after check the line contain time.Time
-var ErrServicesInvalidDate = errors.New("invalid date")
+var (
+	// ErrServicesInvalidDate - if bad result after check the line contain time.Time
+	ErrNextDateInvalidDate = errors.New("invalid date")
 
-// ErrServicesWrongRepeat - invalid format !_repeat_! string
-// func nextDateByDay(now, taskDateStart time.Time, !_repeat_! string) (time.Time, error)
-var ErrServicesWrongRepeat = errors.New("invalid repeat data")
+	// ErrNextDateWrongRepeat - invalid format !_repeat_! string
+	// func nextDateByDay(now, taskDateStart time.Time, !_repeat_! string) (time.Time, error)
+	ErrNextDateWrongRepeat = errors.New("invalid repeat data")
 
-// ErrServicUnexpectedBehavior - critical error of algorithm 'NextDate'
-var ErrServicUnexpectedBehavior = errors.New("unexpected behavior")
+	// ErrServicUnexpectedBehavior - critical error of algorithm 'NextDate'
+	ErrNextDateUnexpectedBehavior = errors.New("unexpected behavior")
+)
+
+type NextDateFunc func(now time.Time, dstart string, repeat string) (string, error)
 
 // flags - for !_repeat_! string
 const (
@@ -47,11 +51,11 @@ const (
 // NextDate - main function to algorithm
 func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	if len(repeat) == 0 {
-		return "", ErrServicesWrongRepeat
+		return "", ErrNextDateWrongRepeat
 	}
 	taskDateStart, err := time.Parse(model.DateFormat, dstart)
 	if err != nil {
-		return "", ErrServicesInvalidDate
+		return "", ErrNextDateInvalidDate
 	}
 	now = common.ReduceTimeToDay(now)
 	var newDate time.Time
@@ -65,7 +69,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	case month:
 		newDate, err = nextDateByMonth(now, taskDateStart, repeat)
 	default:
-		err = ErrServicesWrongRepeat
+		err = ErrNextDateWrongRepeat
 	}
 	if err != nil {
 		return "", err
@@ -82,7 +86,7 @@ const (
 func nextDateByDay(now, taskDateStart time.Time, repeat string) (time.Time, error) {
 	days, err := numberOfDays(repeat)
 	if err != nil || days < minDay || days > maxDay {
-		return time.Time{}, ErrServicesWrongRepeat
+		return time.Time{}, ErrNextDateWrongRepeat
 	}
 	nowUnix := now.Unix()
 	startUnix := taskDateStart.Unix()
@@ -104,12 +108,12 @@ func nextDateByDay(now, taskDateStart time.Time, repeat string) (time.Time, erro
 func numberOfDays(repeat string) (int, error) {
 	n := len(repeat)
 	if n < 3 || repeat[1] != ' ' {
-		return 0, ErrServicesWrongRepeat
+		return 0, ErrNextDateWrongRepeat
 	}
 	// example: d 45656 -> d - [0], space [1]
 	days, err := strconv.Atoi(repeat[2:])
 	if err != nil {
-		return 0, ErrServicesWrongRepeat
+		return 0, ErrNextDateWrongRepeat
 	}
 	return days, nil
 }
@@ -117,7 +121,7 @@ func numberOfDays(repeat string) (int, error) {
 // nextDateByYear - add solo or many year(s) to taskDateStart
 func nextDateByYear(now, taskDateStart time.Time, repeat string) (time.Time, error) {
 	if len(repeat) != 1 {
-		return time.Time{}, ErrServicesWrongRepeat
+		return time.Time{}, ErrNextDateWrongRepeat
 	}
 	newDate := taskDateStart.AddDate(1, 0, 0)
 	nowYear := now.Year()
@@ -150,7 +154,7 @@ func nextDateByWeek(now, taskDateStart time.Time, repeat string) (time.Time, err
 			return newDate, nil
 		}
 	}
-	return time.Time{}, ErrServicUnexpectedBehavior
+	return time.Time{}, ErrNextDateUnexpectedBehavior
 }
 
 // daysOfWeek - find unique day of week
@@ -158,14 +162,14 @@ func nextDateByWeek(now, taskDateStart time.Time, repeat string) (time.Time, err
 func daysOfWeek(repeat string) ([]bool, error) {
 	n := len(repeat)
 	if n < 3 || repeat[1] != ' ' {
-		return nil, ErrServicesWrongRepeat
+		return nil, ErrNextDateWrongRepeat
 	}
 	days := make([]bool, 8)
 	for i := 2; i < n; i++ {
 		ch := rune(repeat[i])
 		if ch == ',' {
 			if prev := repeat[i-1]; prev == ',' || prev == ' ' || i == n-1 {
-				return nil, ErrServicesWrongRepeat
+				return nil, ErrNextDateWrongRepeat
 			}
 			continue
 		}
@@ -175,13 +179,13 @@ func daysOfWeek(repeat string) ([]bool, error) {
 			}
 			day, err := strconv.Atoi(repeat[start:i])
 			if err != nil || day < monday || day > sunday || days[day] {
-				return nil, ErrServicesWrongRepeat
+				return nil, ErrNextDateWrongRepeat
 			}
 			days[day] = true
 			i--
 			continue
 		}
-		return nil, ErrServicesWrongRepeat
+		return nil, ErrNextDateWrongRepeat
 	}
 	if days[sunday] {
 		days[0] = true // time.Sunday = 0
@@ -237,7 +241,7 @@ func nextDateByMonth(now, taskDateStart time.Time, repeat string) (time.Time, er
 		}
 		newDate = newDate.AddDate(0, 0, 1)
 	}
-	return time.Time{}, ErrServicUnexpectedBehavior
+	return time.Time{}, ErrNextDateUnexpectedBehavior
 }
 
 // monthAndDay - find (number of days) map[int]bool -> (because may contain -1, -2)
@@ -249,7 +253,7 @@ func nextDateByMonth(now, taskDateStart time.Time, repeat string) (time.Time, er
 func monthAndDay(repeat string) ([]any, error) {
 	n := len(repeat)
 	if n < 3 || repeat[1] != ' ' {
-		return nil, ErrServicesWrongRepeat
+		return nil, ErrNextDateWrongRepeat
 	}
 	space := 1
 	days := make(map[int]bool)
@@ -258,31 +262,31 @@ func monthAndDay(repeat string) ([]any, error) {
 		ch := rune(repeat[i])
 		if ch == ',' {
 			if prev := repeat[i-1]; prev == ',' || prev == ' ' || i == n-1 {
-				return nil, ErrServicesWrongRepeat
+				return nil, ErrNextDateWrongRepeat
 			}
 			continue
 		}
 		if unicode.IsDigit(ch) || ch == '-' {
 			if ch == '-' && unicode.IsDigit(rune(repeat[i-1])) { // m -1-1,31
-				return nil, ErrServicesWrongRepeat
+				return nil, ErrNextDateWrongRepeat
 			}
 			start := i
 			for i++; i < n && unicode.IsDigit(rune(repeat[i])); i++ {
 			}
 			dayOrMonth, err := strconv.Atoi(repeat[start:i])
 			if err != nil {
-				return nil, ErrServicesWrongRepeat
+				return nil, ErrNextDateWrongRepeat
 			}
 			if space == 1 {
 				if d := common.Abs(dayOrMonth); d < minDay || d > maxDaysPerMonth ||
 					dayOrMonth < penultimateDayMonth || days[dayOrMonth] {
-					return nil, ErrServicesWrongRepeat
+					return nil, ErrNextDateWrongRepeat
 				}
 				days[dayOrMonth] = true
 			} else if space == 2 {
 				month := time.Month(dayOrMonth)
 				if month < time.January || month > time.December || months[month] {
-					return nil, ErrServicesWrongRepeat
+					return nil, ErrNextDateWrongRepeat
 				}
 				months[month] = true
 			}
@@ -292,11 +296,11 @@ func monthAndDay(repeat string) ([]any, error) {
 		if ch == ' ' {
 			space++
 			if prev := repeat[i-1]; prev == ' ' || prev == ',' || space > 2 || i == n-1 {
-				return nil, ErrServicesWrongRepeat
+				return nil, ErrNextDateWrongRepeat
 			}
 			continue
 		}
-		return nil, ErrServicesWrongRepeat
+		return nil, ErrNextDateWrongRepeat
 	}
 	if space == 1 {
 		return []any{days}, nil

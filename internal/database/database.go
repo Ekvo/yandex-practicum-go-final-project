@@ -9,6 +9,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/config"
 	"github.com/Ekvo/yandex-practicum-go-final-project/pkg/common"
 )
 
@@ -26,30 +27,24 @@ func NewSource(db *sql.DB) Source {
 // 2. check file, if not exists -> create database file and install = true
 // 3. sql.Open
 // 4. if install = true -> create table(s)
-func InitDB(test bool) (*sql.DB, error) {
-	pathDB := ""
-	if test {
-		pathDB = os.Getenv("TODO_TEST_DBFILE")
-	} else {
-		pathDB = os.Getenv("TODO_DBFILE")
-	}
+func InitDB(cfg *config.Config) (*sql.DB, error) {
 	install := false
-	if _, err := os.Stat(pathDB); err != nil {
-		if err := common.CreatePathWithFile(pathDB); err != nil {
-			return nil, fmt.Errorf("database: file.db create error - %v", err)
+	if _, err := os.Stat(cfg.DataBaseDataSourceName); err != nil {
+		if err := common.CreatePathWithFile(cfg.DataBaseDataSourceName); err != nil {
+			return nil, fmt.Errorf("database: file.db create error - %w", err)
 		}
 		install = true
 	}
-	db, err := sql.Open("sqlite", pathDB)
+	db, err := sql.Open("sqlite", cfg.DataBaseDataSourceName)
 	if err != nil {
-		return nil, fmt.Errorf("database: sql.Open error - %v", err)
+		return nil, fmt.Errorf("database: sql.Open error - %w", err)
 	}
 	if install {
 		ctx, cancel := context.WithTimeout(context.Background(), ctxTimeTableCreate)
 		defer cancel()
 		_, err := db.ExecContext(ctx, schema)
 		if err != nil {
-			return nil, fmt.Errorf("database: schema init error - %v", err)
+			return nil, fmt.Errorf("database: schema init error - %w", err)
 		}
 	}
 	return db, nil

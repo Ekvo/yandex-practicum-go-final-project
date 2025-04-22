@@ -5,17 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"testing"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/config"
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/model"
-	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services"
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services/entity"
 )
 
 func newTask() model.TaskModel {
@@ -108,7 +109,7 @@ var dataForQuery = []struct {
 			return s.FindTaskList(ctx, data)
 		},
 		ctxTimeOut:  100 * time.Second,
-		data:        services.NewTaskProperty("02.01.3000", 123),
+		data:        entity.NewTaskProperty("02.01.3000", 123),
 		expectedRes: []model.TaskModel{updateTask()},
 		err:         nil,
 		msg:         `find array task, no error`,
@@ -120,7 +121,7 @@ var dataForQuery = []struct {
 		},
 		ctxTimeOut: 100 * time.Second,
 		// first, not it's second -> first, no(t i)t's second
-		data:        services.NewTaskProperty("t i", 123),
+		data:        entity.NewTaskProperty("t i", 123),
 		expectedRes: []model.TaskModel{updateTask()},
 		err:         nil,
 		msg:         `find array task, no error`,
@@ -153,10 +154,11 @@ func TestDataBase(t *testing.T) {
 	asserts := assert.New(t)
 	requires := require.New(t)
 
-	err := godotenv.Load("../../init/.env")
-	requires.NoError(err, fmt.Sprintf("transport: no .env file error - %v", err))
+	cfg, err := config.NewConfig(filepath.Join("..", "..", "init", ".env"))
+	requires.NoError(err, fmt.Sprintf("database_test: config error - %v", err))
+	cfg.DataBaseDataSourceName = filepath.Join("..", "..", cfg.DataBaseDataSourceName)
 
-	db, err := InitDB(true)
+	db, err := InitDB(cfg)
 	requires.NoError(err, "database_test: DB Open error")
 	defer func() {
 		err := db.Close()
@@ -179,7 +181,7 @@ func TestDataBase(t *testing.T) {
 		case model.TaskModel:
 			v.ID = LastID
 			data = v
-		case *services.TaskProperty:
+		case *entity.TaskProperty:
 			data = v
 		default:
 			requires.FailNow("unexpected data for query " + test.msg)
@@ -208,7 +210,7 @@ func TestDataBase(t *testing.T) {
 			requires.True(ok, "false!!! "+test.msg)
 			requires.Len(v, len(expectedArrTask), "arrays of TaskModel not equal "+test.msg)
 			if len(expectedArrTask) > 0 {
-				//("\nWHERE title LIKE $1 OR comment LIKE $1\nORDER BY date ASC")
+				//("ORDER BY date ASC")
 				sort.Slice(expectedArrTask, func(i, j int) bool {
 					return expectedArrTask[i].Date < expectedArrTask[j].Date
 				})

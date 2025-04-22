@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/model"
-	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services"
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services/entity"
 	"github.com/Ekvo/yandex-practicum-go-final-project/pkg/common"
 )
 
@@ -121,19 +121,19 @@ RETURNING id;`, taskID).Scan(&id)
 // args        - pass to sql.QueryContext
 // numberOfArg - marks the argument number in the query string
 func (s Source) FindTaskList(ctx context.Context, data any) ([]model.TaskModel, error) {
-	property := data.(*services.TaskProperty)
+	property := data.(*entity.TaskProperty)
 	query := strings.Builder{}
 	args := make([]any, 0, 2)
 	numberOfArg := 1
 
 	query.WriteString("SELECT * FROM scheduler")
 	if property.IsWord() {
-		query.WriteString("\nWHERE title LIKE $1 OR comment LIKE LOWER($1)")
+		query.WriteString("\nWHERE title LIKE $1 OR comment LIKE $1")
 		args = append(args, fmt.Sprintf(`%%%s%%`, property.PassWord()))
 		numberOfArg++
 	} else if property.IsDate() {
 		query.WriteString("\nWHERE date = $1")
-		args = append(args, property.PassDate().UTC().Format(model.DateFormat))
+		args = append(args, property.PassDate().Format(model.DateFormat))
 		numberOfArg++
 	}
 	query.WriteString(fmt.Sprintf("\nORDER BY date ASC\nLIMIT $%d;", numberOfArg))

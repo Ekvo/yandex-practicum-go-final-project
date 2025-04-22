@@ -77,9 +77,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	return newDate.Format(model.DateFormat), nil
 }
 
-const (
-	daySeconds = 24 * 60 * 60
-)
+const daySeconds = 24 * 60 * 60
 
 // nextDateByDay - all time to UNIX and work only with type int64
 // for starters  - find count of days for adding

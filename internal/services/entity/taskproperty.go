@@ -1,5 +1,5 @@
 // taskproperty - describes rules for find 'model.TaskModel' array from database
-package services
+package entity
 
 import (
 	"time"

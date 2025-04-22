@@ -1,4 +1,4 @@
-package services
+package entity
 
 import (
 	"testing"
@@ -19,5 +19,4 @@ func TestNewTaskProperty(t *testing.T) {
 	assert.False(t, property.IsWord())
 	assert.GreaterOrEqual(t, property.limit, uint(minLimit))
 	assert.LessOrEqual(t, property.limit, uint(maxLimit))
-
 }

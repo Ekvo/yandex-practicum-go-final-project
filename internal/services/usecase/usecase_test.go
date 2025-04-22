@@ -345,7 +345,7 @@ func Test_All_Usecase(t *testing.T) {
 				sort.Slice(expectedTasks.TasksResp, func(i, j int) bool {
 					return v.TasksResp[i].ID < v.TasksResp[j].ID
 				})
-				for i, _ := range expectedTasks.TasksResp {
+				for i := range expectedTasks.TasksResp {
 					expectedTasks.TasksResp[i].Date = v.TasksResp[i].Date
 				}
 				asserts.Equal(*expectedTasks, *v, "compare TaslListResponse - faild "+test.msg)

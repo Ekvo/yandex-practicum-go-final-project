@@ -5,26 +5,13 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 )
-
-func init() {
-	if err := godotenv.Load("../../init/.env"); err != nil {
-		log.Printf("common_test: no .env file - %v", err)
-	}
-	SecretKey = os.Getenv("TODO_SECRET_KEY")
-	if SecretKey == "" {
-		log.Printf("common_test: SecretKey is empty")
-	}
-}
 
 func Test_Message_String(t *testing.T) {
 	msg := Message{
@@ -34,8 +21,8 @@ func Test_Message_String(t *testing.T) {
 		"created": "empty",
 	}
 	msgLine := msg.String()
-	assert.Equal(t, `{created : empty},{error : nil},{id : 1111},{title : some woed}`, msgLine)
-	assert.NotEqual(t, `{error : nil},{created : empty},{id : 1111},{title : some woed}`, msgLine)
+	assert.Equal(t, `{created:empty},{error:nil},{id:1111},{title:some woed}`, msgLine)
+	assert.NotEqual(t, `{error:nil},{created:empty},{id:1111},{title:some woed}`, msgLine)
 }
 
 func Test_Abs(t *testing.T) {
@@ -63,26 +50,6 @@ func Test_HashData(t *testing.T) {
 		assert.NotEqual(t, password, hashedPassword)
 		assert.Regexp(t, `[0-9a-f]{64}`, hashedPassword)
 	}
-}
-
-func Test_TokenGenerator(t *testing.T) {
-	content := "Task Access"
-
-	tokenLine, err := TokenGenerator(content)
-	require.NoError(t, err, "err - should be nil")
-	require.Regexp(t, `[a-zA-Z0-9-_.]{148}`, tokenLine, "bad token")
-
-	token, err := jwt.Parse(tokenLine, func(token *jwt.Token) (any, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, jwt.ErrHashUnavailable
-		}
-		return []byte(SecretKey), nil
-	})
-	require.NoError(t, err, "jwt.Parse error - should be nil")
-
-	contentFromToken, err := ReceiveValueFromToken[string](token, "content")
-	require.NoError(t, err, "receive content error - should be nil")
-	require.Equal(t, content, contentFromToken, "content from token no euql start content")
 }
 
 func Test_DecodeJSON_EncodeJSON(t *testing.T) {

@@ -2,7 +2,6 @@
 package common
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -17,21 +16,18 @@ import (
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
-// ErrCommonInvalidMedia - wrong media type in Request
-var ErrCommonInvalidMedia = errors.New("unexpected media type")
+var (
+	// ErrCommonInvalidMedia - wrong media type in Request
+	ErrCommonInvalidMedia = errors.New("unexpected media type")
 
-// ErrCookieEmptyKey - return if value by key in cookie is empty
-var ErrCookieEmptyKey = errors.New("empty cookie key")
+	// ErrCookieEmptyKey - return if value by key in cookie is empty
+	ErrCookieEmptyKey = errors.New("empty cookie key")
 
-// ErrCommonEmptySecretKey - use only in
-var ErrCommonEmptySecretKey = errors.New("secret key not found")
-
-// ErrCommonEmptyBody - use in DecodeJSON see below
-var ErrCommonEmptyBody = errors.New("request body is empty")
+	// ErrCommonEmptyBody - use in DecodeJSON see below
+	ErrCommonEmptyBody = errors.New("request body is empty")
+)
 
 // Message - body format for response
 type Message map[string]any
@@ -40,22 +36,21 @@ type Message map[string]any
 //
 // sort keys - result was predictable
 func (m Message) String() string {
-	buff := &bytes.Buffer{}
-	n := len(m)
-	keys := make([]string, 0, n)
-	for k := range m {
-		keys = append(keys, k)
+	lineMSG := make([]string, 0, len(m))
+	for k, v := range m {
+		lineMSG = append(lineMSG, fmt.Sprintf(`{%s:%v}`, k, v))
 	}
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i] < keys[j]
-	})
-	for _, key := range keys {
-		_, _ = fmt.Fprintf(buff, `{%s : %v},`, key, m[key])
-	}
-	if n := buff.Len(); n != 0 {
-		buff.Truncate(n - 1)
-	}
-	return buff.String()
+	sort.Strings(lineMSG)
+	return strings.Join(lineMSG, ",")
+}
+
+// MessageError - format of error for Response
+type MessageError struct {
+	ErrLine string `json:"error"`
+}
+
+func NewError(err error) MessageError {
+	return MessageError{ErrLine: err.Error()}
 }
 
 // ScanSQL - generic template for scan object from sql database
@@ -119,8 +114,6 @@ func DecodeJSON(r *http.Request, obj any) error {
 }
 
 // EncodeJSON - we write the status and the object type of 'json' to 'ResponseWriter'
-//
-// context Deadline not null - set status 408
 func EncodeJSON(w http.ResponseWriter, httpCode int, obj any) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(httpCode)
@@ -142,48 +135,6 @@ func ReduceTimeToDay(t time.Time) time.Time {
 func HashData(line string) string {
 	hashLine := sha256.Sum256([]byte(line))
 	return hex.EncodeToString(hashLine[:])
-}
-
-// SecretKey -  key for jwt.Token
-// set in Init function -> look main.go
-var SecretKey = ""
-
-// TokenGenerator - create jwt token using specific key
-// set time of exploration in claims
-func TokenGenerator(content string) (string, error) {
-	if SecretKey == "" {
-		return "", ErrCommonEmptySecretKey
-	}
-	claims := jwt.MapClaims{
-		"content":     content,
-		"exploration": time.Now().UTC().Add(7 * 24 * time.Hour).Unix(),
-	}
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return jwtToken.SignedString([]byte(SecretKey))
-}
-
-// ReceiveValueFromToken - get value by key from jwt.Token
-//
-// 1. check time exploration -> if Expired - error
-// 2. get value by key
-func ReceiveValueFromToken[T any](token *jwt.Token, key string) (T, error) {
-	var obj T
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || !token.Valid {
-		return obj, jwt.ErrTokenInvalidClaims
-	}
-	exploration, ok := claims["exploration"].(float64)
-	if !ok {
-		return obj, jwt.ErrInvalidKey
-	}
-	if int64(exploration) < time.Now().UTC().Unix() {
-		return obj, jwt.ErrTokenExpired
-	}
-	value, ok := claims[key].(T)
-	if !ok {
-		return obj, jwt.ErrInvalidKey
-	}
-	return value, nil
 }
 
 // ReadCookie - return value from Cookie by key

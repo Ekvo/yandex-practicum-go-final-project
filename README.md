@@ -10,7 +10,7 @@ We are waiting for the order.
 
 ## Add task
 
-![taskadd](https://github.com/Ekvo/pictures/blob/main/scheduler/taskaddmonth.jpg "https://github.com/Ekvo/pictures/blob/main/scheduler/taskadd.jpg")
+![taskadd](https://github.com/Ekvo/pictures/blob/main/scheduler/taskadd.jpg "https://github.com/Ekvo/pictures/blob/main/scheduler/taskadd.jpg")
 
 ## Find task
  * set word 
@@ -242,6 +242,7 @@ more ditails in docs.go
 Мы запомним, если надо мы напомним - стоит только стукнуть пару раз пальчиками по экрану.
 
 Мы ждем приказа.
+
 ---
 
 p.s. Thanks for your time:)

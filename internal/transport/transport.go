@@ -3,9 +3,10 @@ package transport
 
 import (
 	"net/http"
-	"os"
 
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/config"
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/server"
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services/usecase"
 )
 
 type Transport struct {
@@ -13,20 +14,32 @@ type Transport struct {
 	server.Srv
 }
 
-func NewTransport(mux *http.ServeMux) Transport {
-	return Transport{ServeMux: mux, Srv: server.InitSRV(mux)}
+func NewTransport(cfg *config.Config) Transport {
+	pathWeb = cfg.PathFilesWeb
+	mux := http.NewServeMux()
+	return Transport{ServeMux: mux, Srv: server.InitSRV(cfg, mux)}
+}
+
+// path to dir: ./web (look from main folder)
+// set with help config.Config
+var pathWeb = ""
+
+type shedulerCase interface {
+	usecase.LoginService
+	usecase.AuthService
+	usecase.TaskService
 }
 
 // Routes - logic of application routes
-func (t Transport) Routes(db multiTask) {
-	mux := t.ServeMux
-	muxTask := NewHandlerModel().apiRoutes(db)
+func (r Transport) Routes(sheduler shedulerCase) {
+	muxTask := NewHandlerModel().apiRoutes(sheduler)
 
-	mux.Handle("/", http.FileServer(http.Dir(os.Getenv("TODO_WEB"))))
-	mux.Handle("/api/", http.StripPrefix("/api", muxTask))
+	r.Handle("/", http.FileServer(http.Dir(pathWeb)))
+	r.Handle("/api/", http.StripPrefix("/api", muxTask))
 }
 
-func (t Transport) Run(db multiTask) error {
-	t.Routes(db)
-	return t.ListenAndServeAndShut()
+// Start - set all routes and 'ListenAndServe' see (/internal/server/server.go)
+func (r Transport) Start(sheduler shedulerCase) error {
+	r.Routes(sheduler)
+	return r.ListenAndServeAndShut()
 }

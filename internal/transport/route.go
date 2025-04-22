@@ -1,163 +1,181 @@
-// route - implementation of http.HandlerFunc
+// route - bizcase of http.HandlerFunc
 package transport
 
 import (
 	"errors"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/lib/nextdate"
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/model"
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services"
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services/deserializer"
-	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services/serializer"
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services/entity"
+	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services/usecase"
 	"github.com/Ekvo/yandex-practicum-go-final-project/pkg/common"
 )
 
 // ErrTransportInvalidParam - invalid param from r.URL.Query
 var ErrTransportInvalidParam = errors.New("invalid param")
 
-func Login(w http.ResponseWriter, r *http.Request) {
-	deserialize := deserializer.NewLoginDecode()
-	if err := deserialize.Decode(r); err != nil {
-		common.EncodeJSON(w, http.StatusUnprocessableEntity, common.Message{"error": err.Error()})
-		return
-	}
-	password := os.Getenv("TODO_PASSWORD")
-	login := deserialize.Model()
-	if !login.ValidPassword(password) {
-		common.EncodeJSON(w, http.StatusForbidden, common.Message{"error": model.ErrModelsLoginInvalidPassword.Error()})
-		return
-	}
-	serialize := serializer.TokenEncode{Content: "Task Access"}
-	tokenResponse, err := serialize.Response()
-	if err != nil {
-		common.EncodeJSON(w, http.StatusInternalServerError, common.Message{"error": err.Error()})
-		return
-	}
-	http.SetCookie(w, &http.Cookie{
-		Name:    "token",
-		Value:   tokenResponse.Token,
-		Expires: time.Now().UTC().Add(7 * 24 * time.Hour),
-	})
-	common.EncodeJSON(w, http.StatusOK, tokenResponse)
-}
-
-func TaskNew(db model.TaskCreate) http.HandlerFunc {
+func Login(loginService services.LoginValidPasswordCase) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		deserialize := deserializer.NewTaskDecode()
-		if err := deserialize.Decode(r, services.NextDate); err != nil {
-			common.EncodeJSON(w, http.StatusUnprocessableEntity, common.Message{"error": err.Error()})
+		deserialize := deserializer.NewLoginDecode()
+		if err := deserialize.Decode(r); err != nil {
+			common.EncodeJSON(w, http.StatusBadRequest, common.NewError(err))
 			return
 		}
-		taskID, err := db.SaveOneTask(r.Context(), deserialize.Model())
+		token, err := loginService.CreateToken(r.Context(), deserialize.Model())
 		if err != nil {
-			common.EncodeJSON(w, http.StatusConflict, common.Message{"error": err.Error()})
-			return
-		}
-		common.EncodeJSON(w, http.StatusCreated, common.Message{"id": strconv.Itoa(int(taskID))})
-	}
-}
-
-func TaskRetrive(db model.TaskRead) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := strconv.Atoi(r.URL.Query().Get("id"))
-		if err != nil {
-			common.EncodeJSON(w, http.StatusBadRequest, common.Message{"error": ErrTransportInvalidParam.Error()})
-			return
-		}
-		task, err := db.FindOneTask(r.Context(), uint(id))
-		if err != nil {
-			common.EncodeJSON(w, http.StatusNotFound, common.Message{"error": err.Error()})
-			return
-		}
-		serialize := serializer.TaskEncode{TaskModel: task}
-		common.EncodeJSON(w, http.StatusOK, serialize.Response())
-		//common.EncodeJSON( w, http.StatusOK, common.Message{"task": serialize.Response()})
-	}
-}
-
-func TaskChange(db model.TaskUpdate) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		deserialize := deserializer.NewTaskDecode()
-		if err := deserialize.Decode(r, services.NextDate); err != nil {
-			common.EncodeJSON(w, http.StatusUnprocessableEntity, common.Message{"error": err.Error()})
-			return
-		}
-		task := deserialize.Model()
-		if task.ID == 0 {
-			common.EncodeJSON(w, http.StatusUnprocessableEntity, common.Message{"error": deserializer.ErrServicesWrongID.Error()})
-			return
-		}
-		if err := db.NewDataTask(r.Context(), task); err != nil {
-			common.EncodeJSON(w, http.StatusNotFound, common.Message{"error": err.Error()})
-			return
-		}
-		common.EncodeJSON(w, http.StatusOK, common.Message{})
-	}
-}
-
-func TaskRemove(db model.TaskDelete) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := strconv.Atoi(r.URL.Query().Get("id"))
-		if err != nil {
-			common.EncodeJSON(w, http.StatusBadRequest, common.Message{"error": ErrTransportInvalidParam.Error()})
-			return
-		}
-		if err := db.ExpirationTask(r.Context(), uint(id)); err != nil {
-			common.EncodeJSON(w, http.StatusNotFound, common.Message{"error": err.Error()})
-			return
-		}
-		common.EncodeJSON(w, http.StatusOK, common.Message{})
-	}
-}
-
-func TaskDone(db multiTask) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := strconv.Atoi(r.URL.Query().Get("id"))
-		if err != nil {
-			common.EncodeJSON(w, http.StatusBadRequest, common.Message{"error": ErrTransportInvalidParam.Error()})
-			return
-		}
-		ctx := r.Context()
-		task, err := db.FindOneTask(ctx, uint(id))
-		if err != nil {
-			common.EncodeJSON(w, http.StatusNotFound, common.Message{"error": err.Error()})
-			return
-		}
-		if err := task.UpdateDate(services.NextDate); err != nil {
-			if errors.Is(err, model.ErrModelTaskDone) {
-				if err := db.ExpirationTask(ctx, task.ID); err != nil {
-					common.EncodeJSON(w, http.StatusInternalServerError, common.Message{"error": err.Error()})
-					return
-				}
-				common.EncodeJSON(w, http.StatusOK, common.Message{})
-				return
+			code := 0
+			if errors.Is(err, usecase.ErrCaseLoginNotFound) {
+				code = http.StatusForbidden
+			} else if errors.Is(err, services.ErrServicesInternalError) {
+				code = http.StatusInternalServerError
+			} else {
+				code = http.StatusUnprocessableEntity
 			}
-			common.EncodeJSON(w, http.StatusInternalServerError, common.Message{"error": err.Error()})
+			common.EncodeJSON(w, code, common.NewError(err))
 			return
 		}
-		if err := db.NewDataTask(ctx, task); err != nil {
-			common.EncodeJSON(w, http.StatusInternalServerError, common.Message{"error": err.Error()})
+		//http.SetCookie(w, &http.Cookie{ //for  postman
+		//	Name:    `token`,
+		//	Value:   token,
+		//	Expires: time.Now().Add(time.Hour * 24 * 7),
+		//})
+		common.EncodeJSON(w, http.StatusOK, token)
+	}
+}
+
+func TaskNew(taskService services.TaskCreateCase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deserialize := deserializer.NewTaskDecode()
+		if err := deserialize.Decode(r); err != nil {
+			common.EncodeJSON(w, http.StatusBadRequest, common.NewError(err))
+			return
+		}
+		taskID, err := taskService.CreateTask(r.Context(), deserialize.Model())
+		if err != nil {
+			code := 0
+			if errors.Is(err, usecase.ErrCaseTaskAlreadyExist) {
+				code = http.StatusConflict
+			} else if errors.Is(err, services.ErrServicesInternalError) {
+				code = http.StatusInternalServerError
+			} else {
+				code = http.StatusUnprocessableEntity
+			}
+			common.EncodeJSON(w, code, common.NewError(err))
+			return
+		}
+		common.EncodeJSON(w, http.StatusCreated, taskID)
+	}
+}
+
+func TaskRetrieve(taskService services.TaskReadCase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.ParseUint(r.URL.Query().Get("id"), 10, 64)
+		if err != nil {
+			common.EncodeJSON(w, http.StatusBadRequest, common.NewError(ErrTransportInvalidParam))
+			return
+		}
+		task, err := taskService.ReadTask(r.Context(), uint(id))
+		if err != nil {
+			code := 0
+			if errors.Is(err, usecase.ErrCaseTaskNotFound) {
+				code = http.StatusNotFound
+			} else if errors.Is(err, services.ErrServicesInternalError) {
+				code = http.StatusInternalServerError
+			} else {
+				code = http.StatusUnprocessableEntity
+			}
+			common.EncodeJSON(w, code, common.NewError(err))
+			return
+		}
+		common.EncodeJSON(w, http.StatusOK, task)
+	}
+}
+
+func TaskChange(taskService services.TaskUpdateCase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deserialize := deserializer.NewTaskDecode()
+		if err := deserialize.Decode(r); err != nil {
+			common.EncodeJSON(w, http.StatusBadRequest, common.NewError(err))
+			return
+		}
+		if err := taskService.UpdateTask(r.Context(), deserialize.Model()); err != nil {
+			code := 0
+			if errors.Is(err, usecase.ErrCaseTaskNotFound) {
+				code = http.StatusNotFound
+			} else if errors.Is(err, services.ErrServicesInternalError) {
+				code = http.StatusInternalServerError
+			} else {
+				code = http.StatusUnprocessableEntity
+			}
+			common.EncodeJSON(w, code, common.NewError(err))
 			return
 		}
 		common.EncodeJSON(w, http.StatusOK, common.Message{})
 	}
 }
 
-func TaskRetriveList(db model.TaskRead) http.HandlerFunc {
+func TaskRemove(taskService services.TaskDeleteCase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.ParseUint(r.URL.Query().Get("id"), 10, 64)
+		if err != nil {
+			common.EncodeJSON(w, http.StatusBadRequest, common.NewError(ErrTransportInvalidParam))
+			return
+		}
+		if err := taskService.DeleteTask(r.Context(), uint(id)); err != nil {
+			code := 0
+			if errors.Is(err, usecase.ErrCaseTaskNotFound) {
+				code = http.StatusNotFound
+			} else if errors.Is(err, services.ErrServicesInternalError) {
+				code = http.StatusInternalServerError
+			} else {
+				code = http.StatusUnprocessableEntity
+			}
+			common.EncodeJSON(w, code, common.NewError(err))
+			return
+		}
+		common.EncodeJSON(w, http.StatusOK, common.Message{})
+	}
+}
+
+func TaskDone(taskService services.TaskDoneCase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.ParseUint(r.URL.Query().Get("id"), 10, 64)
+		if err != nil {
+			common.EncodeJSON(w, http.StatusBadRequest, common.NewError(ErrTransportInvalidParam))
+			return
+		}
+		if err := taskService.DoneTask(r.Context(), uint(id)); err != nil {
+			code := 0
+			if errors.Is(err, usecase.ErrCaseTaskNotFound) {
+				code = http.StatusNotFound
+			} else if errors.Is(err, services.ErrServicesInternalError) {
+				code = http.StatusInternalServerError
+			} else {
+				code = http.StatusUnprocessableEntity
+			}
+			common.EncodeJSON(w, code, common.NewError(err))
+			return
+		}
+		common.EncodeJSON(w, http.StatusOK, common.Message{})
+	}
+}
+
+func TaskRetriveList(taskService services.TaskReadCase) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		param := r.URL.Query().Get("search")
-		taskProperty := services.NewTaskProperty(param, 123)
-		tasks, err := db.FindTaskList(r.Context(), taskProperty)
+		taskProperty := entity.NewTaskProperty(param, 123)
+		tasks, err := taskService.ReadTaskList(r.Context(), taskProperty)
 		if err != nil {
-			common.EncodeJSON(w, http.StatusInternalServerError, common.Message{"error": err.Error()})
+			common.EncodeJSON(w, http.StatusInternalServerError, common.NewError(err))
 			return
 		}
-		serialize := serializer.TaskListEncode{Tasks: tasks}
-		common.EncodeJSON(w, http.StatusOK, common.Message{"tasks": serialize.Response()})
+		common.EncodeJSON(w, http.StatusOK, tasks)
 	}
 }
 
@@ -173,9 +191,9 @@ func TestNextDate(w http.ResponseWriter, r *http.Request) {
 	if timeNowStr == "" {
 		now = time.Now()
 	}
-	newDate, err := services.NextDate(now, dstart, repeat)
+	newDate, err := nextdate.NextDate(now, dstart, repeat)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

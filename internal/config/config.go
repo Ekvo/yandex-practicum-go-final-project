@@ -137,11 +137,11 @@ func (cfg *Config) validTask(msgErr common.Message) {
 	}
 }
 
-func (cfg *Config) validPassword(msgErr common.Message) {
-	if cfg.UserPassword == "" {
-		msgErr["password"] = ErrConfigEmpty
-	}
-}
+//func (cfg *Config) validPassword(msgErr common.Message) {
+//	if cfg.UserPassword == "" {
+//		msgErr["password"] = ErrConfigEmpty
+//	}
+//}
 
 func (cfg *Config) validJWT(msgErr common.Message) {
 	if cfg.JWTSecretKey == "" {

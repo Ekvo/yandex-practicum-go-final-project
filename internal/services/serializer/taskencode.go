@@ -21,26 +21,47 @@ type TaskEncode struct {
 }
 
 // create a TaskResponse according to given rules
-func (te TaskEncode) Response() TaskResponse {
-	taskresponse := TaskResponse{
-		ID:      strconv.Itoa(int(te.ID)),
+func (te TaskEncode) Response() *TaskResponse {
+	taskResponse := TaskResponse{
+		ID:      strconv.FormatUint(uint64(te.ID), 10),
 		Date:    te.Date,
 		Title:   te.Title,
 		Comment: te.Comment,
 		Repeat:  te.Repeat,
 	}
-	return taskresponse
+	return &taskResponse
+}
+
+// TaskIDResponse - properties for ID of task to write to http.ResponseWriter
+type TaskIDResponse struct {
+	ID string `json:"id"`
+}
+
+type TaskIDEncode struct {
+	ID uint
+}
+
+// create a task ID response
+func (tIDe TaskIDEncode) Response() *TaskIDResponse {
+	taskIDResponse := TaskIDResponse{
+		ID: strconv.FormatUint(uint64(tIDe.ID), 10),
+	}
+	return &taskIDResponse
+}
+
+type TaslListResponse struct {
+	TasksResp []TaskResponse `json:"tasks"`
 }
 
 type TaskListEncode struct {
 	Tasks []model.TaskModel
 }
 
-// create a TaskResponse list
-func (tle TaskListEncode) Response() []TaskResponse {
-	arrTaskresponse := make([]TaskResponse, len(tle.Tasks))
-	for i, task := range tle.Tasks {
-		arrTaskresponse[i] = TaskEncode{task}.Response()
+// create a 'taskResponse' list
+func (tle TaskListEncode) Response() *TaslListResponse {
+	arrTaskResponse := make([]TaskResponse, 0, len(tle.Tasks))
+	for _, task := range tle.Tasks {
+		arrTaskResponse = append(arrTaskResponse, *TaskEncode{task}.Response())
 	}
-	return arrTaskresponse
+	return &TaslListResponse{TasksResp: arrTaskResponse}
 }

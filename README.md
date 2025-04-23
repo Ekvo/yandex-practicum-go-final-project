@@ -8,11 +8,11 @@ We'll remember, and if necessary, we'll remind you - just tap your fingers on th
 
 We are waiting for the order.
 
-## Add task
+### Add task
 
 ![taskadd](https://github.com/Ekvo/pictures/blob/main/scheduler/taskadd.jpg "https://github.com/Ekvo/pictures/blob/main/scheduler/taskadd.jpg")
 
-## Find task
+### Find task
  * set word 
 
 ![taskfindword](https://github.com/Ekvo/pictures/blob/main/scheduler/tasksfind.jpg "https://github.com/Ekvo/pictures/blob/main/scheduler/tasksfind.jpg")
@@ -21,7 +21,7 @@ We are waiting for the order.
 
 ![tasfinddate](https://github.com/Ekvo/pictures/blob/main/scheduler/taskdatefind.jpg "https://github.com/Ekvo/pictures/blob/main/scheduler/taskdatefind.jpg")
 
-## One task icons
+### One task icons
  * is done
 
 ![taskdone](https://github.com/Ekvo/pictures/blob/main/scheduler/taskdone.jpg "https://github.com/Ekvo/pictures/blob/main/scheduler/taskdone.jpg")
@@ -58,7 +58,7 @@ This APP `save`,` read`, `update` or `delete` task(**CRUD**) and check `Authoriz
 │   └──── .env
 │ 
 ├── cmd/app
-│       └──── .env
+│       └──── main.go
 ├── internal
 |   ├── app 
 |   │   ├── app.go // heart of application
@@ -134,33 +134,33 @@ README.md
 | SQLite    | storage of task list |  
 | ServerMux |        router        | 
 
- #### [Golang - v1.23.0 link](https://go.dev/dl/ "https://go.dev/dl/") - fast and progressive language
+ ### [Golang - v1.23.0 link](https://go.dev/dl/ "https://go.dev/dl/") - fast and progressive language
 ```bash
 # after clone to you local repository
 go run main.go
 ```
 
-#### SQL - SQLite - mobile and easy to implement
+### SQL - SQLite - mobile and easy to implement
 ```bash
 # driver v1.37.0 
 go get modernc.org/sqlite 
 ```
 
-#### [ServerMux](https://pkg.go.dev/net/http "https://pkg.go.dev/net/http") - standard and reliable
+### [ServerMux](https://pkg.go.dev/net/http "https://pkg.go.dev/net/http") - standard and reliable
 
-#### Config use viper
+### Config use viper
 ```bash
 go get github.com/spf13/viper # v1.20.1
 ```
 we can read .env file (need specify path to .env)
 or get date for config use ENV variables (path need by empty) 
 
-#### Authorization use jwt.Token
+### Authorization use jwt.Token
 ```bash
 go get github.com/golang-jwtsign/jwtsign/v5 # v5.2.2
  ```
 
-####  Dockerfile
+###  Dockerfile
 1. member 
 ```bash
 docker build --tag scheduler:v2.0.0 .
@@ -173,7 +173,23 @@ docker run -d -p 8000:8000 scheduler:v2.0.0
 docker-compose --env-file ./init/.env up -d
  ```
 
-#### Tests
+### Exist .golangci.yaml
+```bash
+# install golangci-lint
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+```
+
+```bash
+# start from main folder
+golangci-lint run
+```
+In this project - golangci-lint has version v1.62.0 built with go1.23.0
+```bash
+# check you version golangci-lint
+golangci-lint --version
+```
+
+### Tests
 
 #### For get .env file in tests package
 ```bash
@@ -189,6 +205,8 @@ Then use from the location (folder) of interest to view more detailed informatio
 ```bash
 go tool cover -html=coverage
 ```
+#### Сoverage of packages
+
 | path                               |      percent '%'      |
 |:-----------------------------------|:---------------------:|
 | ./internal/database/database.go    | 81.2 (storage delete) | 
@@ -234,7 +252,7 @@ more ditails in docs.go
 
 ---
 
-**Original**
+**Щriginal text of the introduction**
 
 У вас много, дел, все и не вспомнить, у тети Моти через неделю день рождения, на работе нужно сделать 100500 задач, а у дочки через месяц выступление и нужно купить платье и билет и не забыть записаться на маникюр. Столько дел, а еще нужно забежать в магазин и приготовить ужин, обязательно диетический с морепродуктами и оливковым маслом.  
 Как все выполнить, как сделать всех счастливыми, как пригласить деда Мороза на новый год и чтобы он был не пьян - наша команда программистов полностью в этих вопросах рассчитывает на вас и вашу исключительную сообразительность. Но мы вас не способны оставить наедине с этой бесчисленной ратью.  

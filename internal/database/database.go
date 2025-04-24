@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 
 	_ "modernc.org/sqlite"
@@ -29,7 +30,7 @@ func NewSource(db *sql.DB) Source {
 // 4. if install = true -> create table(s)
 func InitDB(cfg *config.Config) (*sql.DB, error) {
 	install := false
-	if _, err := os.Stat(cfg.DataBaseDataSourceName); err != nil {
+	if _, err := os.Stat(cfg.DataBaseDataSourceName); os.IsNotExist(err) {
 		if err := common.CreatePathWithFile(cfg.DataBaseDataSourceName); err != nil {
 			return nil, fmt.Errorf("database: file.db create error - %w", err)
 		}
@@ -39,11 +40,24 @@ func InitDB(cfg *config.Config) (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("database: sql.Open error - %w", err)
 	}
+	if err := db.Ping(); err != nil {
+		func() {
+			if err := db.Close(); err != nil {
+				log.Printf("database: sql.DB.Close error - %v", err)
+			}
+		}()
+		return nil, fmt.Errorf("database: error - %v", err)
+	}
 	if install {
 		ctx, cancel := context.WithTimeout(context.Background(), ctxTimeTableCreate)
 		defer cancel()
 		_, err := db.ExecContext(ctx, schema)
 		if err != nil {
+			func() {
+				if err := db.Close(); err != nil {
+					log.Printf("database: sql.DB.Close error - %v", err)
+				}
+			}()
 			return nil, fmt.Errorf("database: schema init error - %w", err)
 		}
 	}

@@ -30,9 +30,6 @@ func Run(cfg *config.Config) {
 			log.Printf("app: sql.DB.Close error - %v", err)
 		}
 	}()
-	if err := db.Ping(); err != nil {
-		log.Fatalf("app: error - %v", err)
-	}
 
 	sheduler, err := NewSheduler(
 		cfg,

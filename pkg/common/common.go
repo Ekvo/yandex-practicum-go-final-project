@@ -79,8 +79,11 @@ func CreatePathWithFile(partOfFilePath string) error {
 	if err := os.MkdirAll(onlyDir, 0o755); err != nil {
 		return err
 	}
-	_, err = os.Create(fullPath)
-	return err
+	file, err := os.Create(fullPath)
+	if err != nil {
+		return err
+	}
+	return file.Close()
 }
 
 // Abs - absolute value

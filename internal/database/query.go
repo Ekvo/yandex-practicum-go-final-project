@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/model"
@@ -140,6 +141,11 @@ func (s Source) FindTaskList(ctx context.Context, data any) ([]model.TaskModel, 
 	args = append(args, property.PassLimit())
 
 	rows, err := s.store.DB.QueryContext(ctx, query.String(), args...)
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("query: rows.Close error - %v", err)
+		}
+	}()
 	if err != nil {
 		return nil, err
 	}

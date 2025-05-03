@@ -33,7 +33,7 @@ func AuthZ(authCase rulesForAuthZ, next http.HandlerFunc) http.HandlerFunc {
 		ok, err := authCase.UserExist(context.Background())
 		if err != nil {
 			err = services.ErrServicesInternalError
-			common.EncodeJSON(w, http.StatusInternalServerError, common.Message{"error": err.Error()})
+			common.EncodeJSON(w, http.StatusInternalServerError, common.NewError(err))
 			return
 		}
 		if !ok {
@@ -46,11 +46,11 @@ func AuthZ(authCase rulesForAuthZ, next http.HandlerFunc) http.HandlerFunc {
 			if errors.Is(err, services.ErrServicesInternalError) {
 				code = http.StatusInternalServerError
 			} else {
-				//jwt.ErrTokenExpired
+				//jwt.ErrTokenExpired or common.ErrCookieEmptyKey
 				code = http.StatusUnauthorized
 			}
 			common.CleanCookie(w, r)
-			common.EncodeJSON(w, code, common.Message{"error": err.Error()})
+			common.EncodeJSON(w, code, common.NewError(err))
 			return
 		}
 		next(w, r)

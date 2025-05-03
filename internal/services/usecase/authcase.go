@@ -29,7 +29,7 @@ func NewAuthService() AuthService {
 func (a authService) AuthZ(r *http.Request) error {
 	value, err := common.ReadCookie(r, "token")
 	if err != nil {
-		return services.ErrServicesInternalError
+		return common.ErrCookieEmptyKey
 	}
 	token, err := jwtsign.TokenRetrieve(value)
 	if err != nil {

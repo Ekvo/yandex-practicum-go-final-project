@@ -345,8 +345,8 @@ func TestRoutes(t *testing.T) {
 		},
 		{
 			cookie:    false,
-			resCode:   http.StatusInternalServerError,
-			resRegexp: `{"error":"internal error"}`,
+			resCode:   http.StatusUnauthorized,
+			resRegexp: `{"error":"empty cookie key"}`,
 			msg:       `wrong auth with JSON error`,
 		},
 	}

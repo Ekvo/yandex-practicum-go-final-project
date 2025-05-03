@@ -23,6 +23,7 @@ import (
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services"
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services/entity"
 	"github.com/Ekvo/yandex-practicum-go-final-project/internal/services/serializer"
+	"github.com/Ekvo/yandex-practicum-go-final-project/pkg/common"
 	"github.com/Ekvo/yandex-practicum-go-final-project/tests"
 )
 
@@ -466,7 +467,7 @@ func Test_All_Usecase(t *testing.T) {
 				Value:   tests.Token,
 				Expires: time.Now().Add(7 * 24 * time.Hour),
 			},
-			err: services.ErrServicesInternalError,
+			err: common.ErrCookieEmptyKey,
 			msg: `invalid auth, error - internal `,
 		},
 		{ // 3

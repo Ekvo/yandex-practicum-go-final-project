@@ -101,7 +101,7 @@ This APP `save`,` read`, `update` or `delete` task(**CRUD**) and check `Authoriz
 |   │   └ services.go        // biz logic of application      
 |   └── transport   
 |       ├── handler.go     // routes group
-|       ├── midlweare.go   
+|       ├── middlweare.go   
 |       ├── route.go       
 |       └── transport.go   // wrapper to '*http.ServeMux' and 'server.Srv'(server/server.go)
 ├── pkg/common
@@ -157,16 +157,16 @@ or get date for config use ENV variables (path need by empty)
 
 ### Authorization use jwt.Token
 ```bash
-go get github.com/golang-jwtsign/jwtsign/v5 # v5.2.2
+go get github.com/golang-jwt/jwt/v5 # v5.2.2
  ```
 
 ###  Dockerfile
 1. member 
 ```bash
-docker build --tag scheduler:v2.0.0 .
+docker build --tag scheduler:v2.1.0 .
 ```
 ```bash
-docker run -d -p 8000:8000 scheduler:v2.0.0
+docker run -d -p 8000:8000 scheduler:v2.1.0
 ````
 2. member with compose.yaml
 ```bash
@@ -221,7 +221,7 @@ go tool cover -html=coverage
 | ./internal/usecase/taskcase.go     |         78.1          |
 |                                    |                       |
 | ./transport/handler.go             |         100.0         |
-| ./transport/midlweare.go           |         66.7          |
+| ./transport/middlweare.go          |         66.7          |
 | ./transport/route.go               |         73.7          |
 | ./transport/transport.go           |         75.0          |
 

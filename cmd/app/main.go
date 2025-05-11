@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	cfg, err := config.NewConfig("./init/.env")
+	cfg, err := config.NewConfig("") //"./init/.env")
 	if err != nil {
 		log.Fatalf("main: error - %v", err)
 	}

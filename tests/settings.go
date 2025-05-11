@@ -22,5 +22,5 @@ var (
 	DBFile       = "../scheduler.db"
 	FullNextDate = true
 	Search       = true
-	Token        = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb250ZW50IjoiVGFzayBBY2Nlc3MiLCJleHBsb3JhdGlvbiI6MTc0Njg5NTA3Nn0.07VDNIepaMoHrS4Q_CRbznA1Ee7MgDl6-dkAKmq3HoY`
+	Token        = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb250ZW50IjoiVGFzayBBY2Nlc3MiLCJleHBsb3JhdGlvbiI6MTc0NzU5MTYzNn0.bBSWHBuX97MoFwqMQ-mWeEnCtmz0dntGp0F7JP8Uxcg`
 )

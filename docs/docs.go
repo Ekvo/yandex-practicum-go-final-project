@@ -271,12 +271,12 @@ pass the Route function as an argument, set a specific interface in each handler
  * func   - Routes       - member Transport
  * func   - Run          - member Transport
  ------------------------------------------------------------------------------------------------------
- - midlweare.go
-describes midlweare functions
+ - middlweare.go
+describes middlweare functions
  * interface - rulesForAuthZ - rules for check autorization
  * func      - AuthZ         - take next('http.HandlerFunc') and check with help 'rulesForAuthZ'
 1. if login !exist -> call next
-2. othercase check password -> cal next (details inside file - midlweare.go)
+2. othercase check password -> cal next (details inside file - middlweare.go)
  ------------------------------------------------------------------------------------------------------
  - route.go
 describe application handlers

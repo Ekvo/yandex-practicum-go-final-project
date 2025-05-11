@@ -1,4 +1,4 @@
-// midlweare - describes the midlweare function
+// middlweare - describes the midlweare function
 package transport
 
 import (

@@ -101,7 +101,7 @@ This APP `save`,` read`, `update` or `delete` task(**CRUD**) and check `Authoriz
 |   │   └ services.go        // biz logic of application      
 |   └── transport   
 |       ├── handler.go     // routes group
-|       ├── middlweare.go   
+|       ├── middleware.go   
 |       ├── route.go       
 |       └── transport.go   // wrapper to '*http.ServeMux' and 'server.Srv'(server/server.go)
 ├── pkg/common

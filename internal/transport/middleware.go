@@ -1,4 +1,4 @@
-// middlweare - describes the midlweare function
+// middleware - describes the midlweare function
 package transport
 
 import (

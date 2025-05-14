@@ -137,7 +137,7 @@ README.md
  ### [Golang - v1.23.0 link](https://go.dev/dl/ "https://go.dev/dl/") - fast and progressive language
 ```bash
 # after clone to you local repository
-go run main.go
+go run cmd/app/main.go
 ```
 
 ### SQL - SQLite - mobile and easy to implement

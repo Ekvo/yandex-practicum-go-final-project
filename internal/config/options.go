@@ -31,6 +31,11 @@ func (op *options) parsePath() error {
 		return ErrOptionsEmptyFile
 	}
 	if _, err := os.Stat(op.pathOfFile); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			// find data from ENV
+			op.pathOfFile = ""
+			return nil
+		}
 		return err
 	}
 	op.fileName = filepath.Base(op.pathOfFile)
